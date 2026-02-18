@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Estoque Voz V4.4</title>
+    <title>Estoque Voz Dupla V4.5</title>
     
     <link rel="icon" href="icone.png" type="image/png">
     <link rel="apple-touch-icon" href="icone.png">
@@ -68,6 +68,7 @@
         .card { background: var(--card); padding: 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 12px; transition: all 0.3s; }
         label { font-size: 9px; margin-bottom: 4px; display: block; color: var(--accent); text-transform: uppercase; }
         
+        /* Ajuste geral dos inputs para caber o mic e o X */
         input[type="text"], select { padding: 8px 10px; background-color: var(--highlight); border: 1px solid var(--borda-caixas); border-radius: 6px; font-weight: 700; color: var(--text); font-size: 16px; width: 100%; outline: none; transition: border 0.3s, background-color 0.3s, color 0.3s; }
         input[type="text"]:focus, select:focus { border: 1px solid var(--accent); }
         input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; margin: 0; accent-color: var(--btn-danger); }
@@ -274,7 +275,7 @@
             <div style="position: relative;">
                 <label>Produto</label>
                 <input type="text" id="novoProduto" placeholder="Item" oninput="autoPreencherUnidade()" style="padding-right: 55px;">
-                <button class="btn-mic" onclick="toggleMic()" id="btn-mic-prod">
+                <button class="btn-mic" onclick="toggleMic('produto', event)" id="btn-mic-prod">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                         <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -286,7 +287,15 @@
             </div>
             <div style="position: relative;">
                 <label>Qtd</label>
-                <input type="text" id="novoQtd" placeholder="Qtd" onclick="abrirCalculadora(this)" readonly style="padding-right: 25px; cursor: pointer;">
+                <input type="text" id="novoQtd" placeholder="Qtd" onclick="abrirCalculadora(this)" readonly style="padding-right: 55px; cursor: pointer;">
+                <button class="btn-mic" onclick="toggleMic('qtd', event)" id="btn-mic-qtd">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </button>
                 <span class="btn-limpar" onclick="limparCampo('novoQtd')">✖</span>
             </div>
             <div>
@@ -403,12 +412,12 @@
             } catch (e) {}
         }
 
-        // --- SISTEMA DE RECONHECIMENTO DE VOZ ROBUSTO ---
+        // --- SISTEMA DE RECONHECIMENTO DE VOZ (DUPLO) ---
         let recognition = null;
         let isRecording = false;
+        let activeField = null; // 'produto' ou 'qtd'
 
         function initSpeech() {
-            // Tenta obter a API padrão ou a webkit (Chrome/Safari)
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             
             if (SpeechRecognition) {
@@ -419,15 +428,25 @@
 
                 recognition.onstart = function() {
                     isRecording = true;
-                    document.getElementById('btn-mic-prod').classList.add('ouvindo');
-                    document.getElementById('novoProduto').placeholder = "Ouvindo...";
+                    // Ativa a animação no botão correto
+                    if (activeField === 'produto') {
+                        document.getElementById('btn-mic-prod').classList.add('ouvindo');
+                        document.getElementById('novoProduto').placeholder = "Ouvindo...";
+                    } else if (activeField === 'qtd') {
+                        document.getElementById('btn-mic-qtd').classList.add('ouvindo');
+                        document.getElementById('novoQtd').placeholder = "...";
+                    }
                 };
 
                 recognition.onend = function() {
                     isRecording = false;
                     document.getElementById('btn-mic-prod').classList.remove('ouvindo');
+                    document.getElementById('btn-mic-qtd').classList.remove('ouvindo');
                     document.getElementById('novoProduto').placeholder = "Item";
-                    autoPreencherUnidade(); 
+                    document.getElementById('novoQtd').placeholder = "Qtd";
+                    
+                    if(activeField === 'produto') autoPreencherUnidade(); 
+                    activeField = null;
                 };
 
                 recognition.onresult = function(event) {
@@ -435,46 +454,53 @@
                     for (let i = event.resultIndex; i < event.results.length; i++) {
                         transcript += event.results[i][0].transcript;
                     }
-                    document.getElementById('novoProduto').value = transcript.replace(/\.$/, ''); 
+                    let textoFinal = transcript.replace(/\.$/, '');
+
+                    // Preenche o campo correto
+                    if (activeField === 'produto') {
+                        document.getElementById('novoProduto').value = textoFinal;
+                    } else if (activeField === 'qtd') {
+                        document.getElementById('novoQtd').value = textoFinal;
+                    }
                 };
 
                 recognition.onerror = function(event) {
                     isRecording = false;
                     document.getElementById('btn-mic-prod').classList.remove('ouvindo');
+                    document.getElementById('btn-mic-qtd').classList.remove('ouvindo');
                     
-                    // DIAGNÓSTICO DE ERROS
                     if (event.error === 'not-allowed') {
-                        mostrarAlertaElegante("🚫 Permissão de microfone negada.\nVerifique as configurações do navegador.");
+                        mostrarAlertaElegante("🚫 Acesso negado.\nPermita o uso do microfone no navegador.");
+                    } else if (event.error === 'service-not-allowed') {
+                        mostrarAlertaElegante("⚠️ Ditado Desativado.\n\nVá em Ajustes > Geral > Teclado e ative a opção 'Ativar Ditado' no seu iPhone.");
                     } else if (event.error === 'network') {
-                        mostrarToast("Sem conexão de rede 📶");
-                    } else if (event.error === 'no-speech') {
-                        // Não falou nada, ignora
+                        mostrarToast("Sem internet 📶");
                     } else {
                         console.error(event.error);
-                        // Verifica se está em HTTPS ou Localhost
-                        if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-                            mostrarAlertaElegante("⚠️ Microfone bloqueado!\n\nPor segurança, o navegador exige conexão HTTPS (cadeado).");
-                        } else {
-                            mostrarToast("Erro no mic: " + event.error);
-                        }
                     }
                 };
             } else {
-                document.getElementById('btn-mic-prod').style.display = 'none'; // Esconde se não suportar
+                document.getElementById('btn-mic-prod').style.display = 'none'; 
+                document.getElementById('btn-mic-qtd').style.display = 'none'; 
             }
         }
 
-        function toggleMic() {
+        function toggleMic(campo, event) {
+            if(event) event.stopPropagation(); // Impede abrir calculadora ao clicar no mic da qtd
             darFeedback();
+            
             if (!recognition) { mostrarToast("Navegador sem suporte."); return; }
             
             if (isRecording) {
                 recognition.stop();
+                if (activeField !== campo) {
+                    // Se clicou no outro mic enquanto gravava, espera um pouco e inicia o outro (opcional, aqui só para)
+                }
             } else {
+                activeField = campo;
                 try {
                     recognition.start();
                 } catch (e) {
-                    // Se já estiver rodando ou erro de estado
                     recognition.stop();
                 }
             }
