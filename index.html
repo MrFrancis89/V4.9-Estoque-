@@ -2,16 +2,18 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle de Estoque - Pizzaria</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Estoque Pizzaria - Versão Completa</title>
     <style>
         :root {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
             --primary-color: #bb86fc;
+            --secondary-color: #03dac6;
             --text-color: #e0e0e0;
             --border-color: #333;
             --danger-color: #cf6679;
+            --success-color: #4caf50;
         }
 
         body {
@@ -19,40 +21,36 @@
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
+            padding: 10px;
+            padding-bottom: 80px; /* Espaço para o botão flutuante/footer */
+            user-select: none; /* Evita seleção de texto ao usar app */
         }
 
-        .container {
-            width: 100%;
-            max-width: 600px;
+        /* --- CABEÇALHO E INPUTS --- */
+        .header-controls {
             background-color: var(--surface-color);
-            padding: 20px;
+            padding: 15px;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            margin-bottom: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        h2 {
-            text-align: center;
-            color: var(--primary-color);
-            margin-bottom: 20px;
-        }
-
-        /* Área de Inputs */
-        .input-group {
+        .input-row {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
-        .search-wrapper {
-            display: flex;
-            flex: 2;
+        /* Estilo da Busca com Microfone */
+        .search-container {
             position: relative;
+            flex: 2;
         }
 
-        input {
+        input, select {
             width: 100%;
             padding: 12px;
             border: 1px solid var(--border-color);
@@ -61,256 +59,513 @@
             color: white;
             font-size: 16px;
             outline: none;
+            box-sizing: border-box;
         }
 
-        input:focus {
+        /* Ajuste específico para o input de busca para não cobrir o ícone */
+        #inputNome {
+            padding-right: 45px; 
+        }
+
+        input:focus, select:focus {
             border-color: var(--primary-color);
         }
 
-        /* Botão do Microfone - Agora na Busca */
+        /* Botão do Microfone - Agora dentro da Busca */
         .mic-btn {
-            background-color: transparent;
-            border: none;
-            color: var(--primary-color);
-            cursor: pointer;
             position: absolute;
             right: 5px;
             top: 50%;
             transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--primary-color);
             font-size: 1.2rem;
             padding: 5px 10px;
+            cursor: pointer;
         }
 
-        .mic-btn:active {
-            color: white;
-        }
-
-        /* Input de Quantidade (sem microfone) */
-        .qty-wrapper {
-            flex: 1;
-        }
-
-        button.add-btn {
-            width: 100%;
-            padding: 12px;
+        .btn-add {
             background-color: var(--primary-color);
             color: #000;
             border: none;
+            padding: 12px 20px;
             border-radius: 8px;
             font-weight: bold;
-            font-size: 16px;
             cursor: pointer;
-            margin-bottom: 20px;
+            width: 100%;
         }
 
-        button.add-btn:hover {
-            opacity: 0.9;
-        }
-
-        /* Lista de Itens */
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        li {
-            background-color: #2c2c2c;
+        /* --- CATEGORIAS --- */
+        .category-scroll {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
             margin-bottom: 10px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .category-scroll::-webkit-scrollbar { display: none; } /* Chrome */
+
+        .cat-chip {
+            background-color: #333;
+            color: #ccc;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .cat-chip.active {
+            background-color: var(--primary-color);
+            color: #000;
+            border-color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        /* --- LISTA DE ITENS --- */
+        .item-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
             padding: 15px;
-            border-radius: 8px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid var(--border-color);
+            transition: background-color 0.2s;
         }
 
         .item-info {
-            display: flex;
-            flex-direction: column;
+            flex: 1;
         }
 
         .item-name {
-            font-weight: bold;
             font-size: 1.1rem;
+            font-weight: bold;
+            display: block;
         }
 
-        .item-date {
-            font-size: 0.8rem;
+        .item-meta {
+            font-size: 0.85rem;
             color: #888;
             margin-top: 4px;
-        }
-
-        .actions {
             display: flex;
-            align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
 
-        .qty-badge {
-            background-color: var(--primary-color);
-            color: #000;
-            padding: 4px 10px;
-            border-radius: 12px;
+        /* Botão de Quantidade (Abre Calculadora) */
+        .qty-display {
+            background-color: #333;
+            color: var(--primary-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 1.2rem;
             font-weight: bold;
-            font-size: 0.9rem;
+            min-width: 40px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
         }
 
         .delete-btn {
             background: none;
             border: none;
             color: var(--danger-color);
+            font-size: 1.5rem;
+            padding: 0 0 0 15px;
             cursor: pointer;
-            font-size: 1.2rem;
         }
+
+        /* --- MODAL CALCULADORA --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-end; /* Abre embaixo no mobile */
+        }
+
+        .modal-content {
+            background: var(--surface-color);
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .calc-header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .calc-display {
+            width: 100%;
+            background: #000;
+            color: #fff;
+            font-size: 2rem;
+            padding: 15px;
+            text-align: right;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 1px solid #444;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .calc-btn {
+            padding: 20px;
+            font-size: 1.5rem;
+            background: #333;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .calc-btn.action { background: #444; }
+        .calc-btn.confirm { background: var(--success-color); grid-column: span 2; color: #000; font-weight: bold; }
+        .calc-btn.clear { background: var(--danger-color); color: #fff; }
+
+        /* --- RODAPÉ / AÇÕES --- */
+        .footer-actions {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .btn-small {
+            background: #333;
+            color: #ccc;
+            border: 1px solid #444;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>📦 Estoque Pizzaria</h2>
-
-    <div class="input-group">
-        <div class="search-wrapper">
-            <input type="text" id="itemBusca" placeholder="Nome do item..." onkeyup="filtrarLista()">
-            <button class="mic-btn" onclick="iniciarVoz()" title="Falar item">🎤</button>
+<div class="header-controls">
+    <div class="input-row">
+        <div class="search-container">
+            <input type="text" id="inputNome" placeholder="O que você precisa?" autocomplete="off">
+            <button class="mic-btn" onclick="iniciarVoz()" title="Falar">🎤</button>
         </div>
         
-        <div class="qty-wrapper">
-            <input type="number" id="itemQtd" placeholder="Qtd">
-        </div>
+        <select id="inputCategoria" style="width: 35%;">
+            <option value="Geral">Geral</option>
+            <option value="Frios">Frios</option>
+            <option value="Hortifruti">Hortifruti</option>
+            <option value="Mercearia">Mercearia</option>
+            <option value="Bebidas">Bebidas</option>
+            <option value="Embalagens">Embalagens</option>
+            <option value="Limpeza">Limpeza</option>
+        </select>
     </div>
 
-    <button class="add-btn" onclick="adicionarItem()">Adicionar ao Estoque</button>
+    <div class="input-row">
+        <input type="number" id="inputQtd" placeholder="Qtd" style="width: 30%;">
+        <button class="btn-add" onclick="adicionarItem()">ADICIONAR</button>
+    </div>
 
-    <ul id="listaEstoque">
-        </ul>
+    <div class="category-scroll" id="filtrosContainer">
+        </div>
+</div>
+
+<div id="listaEstoque">
+    </div>
+
+<div class="footer-actions">
+    <button class="btn-small" onclick="copiarLista()">Copiar Lista (WhatsApp)</button>
+    <button class="btn-small" onclick="limparTudo()">Limpar Tudo</button>
+    <p style="margin-top:10px;">Total de itens: <span id="contadorItens">0</span></p>
+</div>
+
+<div class="modal-overlay" id="modalCalc" onclick="fecharCalc(event)">
+    <div class="modal-content">
+        <div class="calc-header" id="calcTitulo">Editando Quantidade</div>
+        <div class="calc-display" id="calcVisor">0</div>
+        <div class="calc-grid">
+            <button class="calc-btn" onclick="addCalc('7')">7</button>
+            <button class="calc-btn" onclick="addCalc('8')">8</button>
+            <button class="calc-btn" onclick="addCalc('9')">9</button>
+            <button class="calc-btn clear" onclick="limparCalc()">C</button>
+            
+            <button class="calc-btn" onclick="addCalc('4')">4</button>
+            <button class="calc-btn" onclick="addCalc('5')">5</button>
+            <button class="calc-btn" onclick="addCalc('6')">6</button>
+            <button class="calc-btn action" onclick="operarCalc('+')">+</button>
+
+            <button class="calc-btn" onclick="addCalc('1')">1</button>
+            <button class="calc-btn" onclick="addCalc('2')">2</button>
+            <button class="calc-btn" onclick="addCalc('3')">3</button>
+            <button class="calc-btn action" onclick="operarCalc('-')">-</button>
+
+            <button class="calc-btn" onclick="addCalc('0')">0</button>
+            <button class="calc-btn" onclick="addCalc('.')">.</button>
+            <button class="calc-btn confirm" onclick="confirmarCalc()">OK</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    // Recupera dados salvos ou inicia vazio
-    let estoque = JSON.parse(localStorage.getItem('estoquePizzaria')) || [];
+    // --- ESTADO DO APP ---
+    let estoque = JSON.parse(localStorage.getItem('estoqueFull')) || [];
+    let filtroAtual = 'Todos';
+    let itemEditandoId = null; // Para saber qual item a calculadora está editando
+    let visorValor = '';
 
-    // Função para reconhecimento de voz (Apenas para o campo de Busca/Nome)
+    // --- INICIALIZAÇÃO ---
+    window.onload = () => {
+        gerarFiltros();
+        renderizar();
+    };
+
+    // --- RECONHECIMENTO DE VOZ (NOVO LOCAL) ---
     function iniciarVoz() {
-        const inputBusca = document.getElementById('itemBusca');
-        
-        // Verifica suporte ao navegador
+        const inputNome = document.getElementById('inputNome');
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
-        if (SpeechRecognition) {
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'pt-BR';
-            
-            // Feedback visual: muda placeholder
-            const placeholderOriginal = inputBusca.placeholder;
-            inputBusca.placeholder = "Ouvindo...";
 
-            recognition.onstart = function() {
-                // Opcional: mudar cor do ícone ou algo visual
-            };
-
-            recognition.onresult = function(event) {
-                const textoFalado = event.results[0][0].transcript;
-                
-                // Preenche SOMENTE o campo de busca/nome
-                inputBusca.value = textoFalado;
-                
-                // Opcional: Aciona o filtro automaticamente ao falar
-                filtrarLista(); 
-                
-                inputBusca.placeholder = placeholderOriginal;
-            };
-
-            recognition.onerror = function(event) {
-                console.error("Erro no reconhecimento: ", event.error);
-                inputBusca.placeholder = "Erro. Tente digitar.";
-                setTimeout(() => inputBusca.placeholder = placeholderOriginal, 2000);
-            };
-
-            recognition.start();
-        } else {
-            alert("Seu navegador não suporta reconhecimento de voz.");
-        }
-    }
-
-    function renderizarLista(itens = estoque) {
-        const listaEl = document.getElementById('listaEstoque');
-        listaEl.innerHTML = '';
-
-        itens.forEach((item, index) => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <div class="item-info">
-                    <span class="item-name">${item.nome}</span>
-                    <span class="item-date">${item.data}</span>
-                </div>
-                <div class="actions">
-                    <span class="qty-badge">${item.qtd} un</span>
-                    <button class="delete-btn" onclick="deletarItem(${index})">🗑️</button>
-                </div>
-            `;
-            listaEl.appendChild(li);
-        });
-    }
-
-    function adicionarItem() {
-        const nomeInput = document.getElementById('itemBusca');
-        const qtdInput = document.getElementById('itemQtd');
-
-        const nome = nomeInput.value.trim();
-        const qtd = qtdInput.value;
-
-        if (nome === '' || qtd === '') {
-            alert('Por favor, preencha o nome e a quantidade.');
+        if (!SpeechRecognition) {
+            alert("Seu navegador não suporta voz.");
             return;
         }
 
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'pt-BR';
+        
+        const originalPlace = inputNome.placeholder;
+        inputNome.placeholder = "Ouvindo...";
+        
+        // Feedback visual no botão
+        const btnMic = document.querySelector('.mic-btn');
+        btnMic.style.color = '#cf6679'; // Vermelho gravando
+
+        recognition.onresult = (event) => {
+            const texto = event.results[0][0].transcript;
+            // Capitaliza a primeira letra
+            inputNome.value = texto.charAt(0).toUpperCase() + texto.slice(1);
+            inputNome.placeholder = originalPlace;
+            btnMic.style.color = ''; // Volta cor original
+            inputNome.focus();
+        };
+
+        recognition.onerror = () => {
+            inputNome.placeholder = "Erro. Tente de novo.";
+            btnMic.style.color = '';
+        };
+
+        recognition.onend = () => {
+            inputNome.placeholder = originalPlace;
+            btnMic.style.color = '';
+        }
+
+        recognition.start();
+    }
+
+    // --- FUNÇÕES DE LISTA ---
+    function adicionarItem() {
+        const nome = document.getElementById('inputNome').value.trim();
+        const qtd = document.getElementById('inputQtd').value.trim();
+        const cat = document.getElementById('inputCategoria').value;
+
+        if (!nome) return alert("Digite o nome do item!");
+
         const novoItem = {
+            id: Date.now(),
             nome: nome,
-            qtd: qtd,
+            qtd: qtd || '1', // Default 1
+            categoria: cat,
             data: new Date().toLocaleDateString('pt-BR')
         };
 
-        estoque.push(novoItem);
-        salvarDados();
-        renderizarLista();
+        estoque.unshift(novoItem); // Adiciona no topo
+        salvar();
         
         // Limpar campos
-        nomeInput.value = '';
-        qtdInput.value = '';
-        nomeInput.focus();
+        document.getElementById('inputNome').value = '';
+        document.getElementById('inputQtd').value = '';
+        document.getElementById('inputNome').focus();
+        renderizar();
     }
 
-    function deletarItem(index) {
-        if(confirm("Tem certeza que deseja remover este item?")) {
-            estoque.splice(index, 1);
-            salvarDados();
-            renderizarLista();
+    function deletarItem(id) {
+        if(confirm("Remover item?")) {
+            estoque = estoque.filter(item => item.id !== id);
+            salvar();
+            renderizar();
         }
     }
 
-    function filtrarLista() {
-        const termo = document.getElementById('itemBusca').value.toLowerCase();
-        const itensFiltrados = estoque.filter(item => 
-            item.nome.toLowerCase().includes(termo)
-        );
-        renderizarLista(itensFiltrados);
-    }
+    function renderizar() {
+        const listaEl = document.getElementById('listaEstoque');
+        listaEl.innerHTML = '';
 
-    function salvarDados() {
-        localStorage.setItem('estoquePizzaria', JSON.stringify(estoque));
-    }
-
-    // Renderiza ao carregar
-    renderizarLista();
-
-    // Permite adicionar com Enter
-    document.getElementById('itemQtd').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            adicionarItem();
+        // Filtragem
+        let itensVisiveis = estoque;
+        if (filtroAtual !== 'Todos') {
+            itensVisiveis = estoque.filter(i => i.categoria === filtroAtual);
         }
-    });
+
+        // Contador
+        document.getElementById('contadorItens').innerText = itensVisiveis.length;
+
+        if (itensVisiveis.length === 0) {
+            listaEl.innerHTML = '<div style="text-align:center; color:#666; margin-top:20px;">Nenhum item encontrado.</div>';
+            return;
+        }
+
+        itensVisiveis.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'item-card';
+            
+            // Ícone da categoria (simples)
+            let icon = '📦';
+            if(item.categoria === 'Frios') icon = '🧀';
+            if(item.categoria === 'Hortifruti') icon = '🥬';
+            if(item.categoria === 'Carnes') icon = '🥩';
+            if(item.categoria === 'Bebidas') icon = '🥤';
+            if(item.categoria === 'Limpeza') icon = '🧹';
+
+            div.innerHTML = `
+                <div class="item-info">
+                    <span class="item-name">${icon} ${item.nome}</span>
+                    <span class="item-meta">${item.categoria} • ${item.data}</span>
+                </div>
+                <div class="qty-display" 
+                     ontouchstart="touchStart(event)" 
+                     ontouchend="touchEnd(event, ${item.id}, '${item.nome}', '${item.qtd}')"
+                     onclick="abrirCalc(${item.id}, '${item.nome}', '${item.qtd}')">
+                    ${item.qtd}
+                </div>
+                <button class="delete-btn" onclick="deletarItem(${item.id})">×</button>
+            `;
+            listaEl.appendChild(div);
+        });
+    }
+
+    // --- GERENCIAMENTO DE SCROLL E FILTROS ---
+    function gerarFiltros() {
+        const cats = ['Todos', 'Geral', 'Frios', 'Hortifruti', 'Carnes', 'Mercearia', 'Bebidas', 'Embalagens', 'Limpeza'];
+        const container = document.getElementById('filtrosContainer');
+        container.innerHTML = '';
+
+        cats.forEach(c => {
+            const chip = document.createElement('div');
+            chip.className = `cat-chip ${c === filtroAtual ? 'active' : ''}`;
+            chip.innerText = c;
+            chip.onclick = () => {
+                filtroAtual = c;
+                gerarFiltros(); // Atualiza visual (active)
+                renderizar();
+            };
+            container.appendChild(chip);
+        });
+    }
+
+    // --- LÓGICA DE SWIPE VS CLICK (Bug Fix) ---
+    let startX = 0;
+    let startY = 0;
+    
+    function touchStart(e) {
+        startX = e.changedTouches[0].screenX;
+        startY = e.changedTouches[0].screenY;
+    }
+
+    function touchEnd(e, id, nome, qtd) {
+        let endX = e.changedTouches[0].screenX;
+        let endY = e.changedTouches[0].screenY;
+        
+        // Se moveu pouco (menos de 10px), considera clique
+        if (Math.abs(endX - startX) < 10 && Math.abs(endY - startY) < 10) {
+            abrirCalc(id, nome, qtd);
+        }
+        // Se moveu muito, o navegador entende como scroll e não faz nada
+    }
+
+    // --- CALCULADORA ---
+    function abrirCalc(id, nome, qtdAtual) {
+        itemEditandoId = id;
+        visorValor = qtdAtual.toString();
+        document.getElementById('calcTitulo').innerText = nome;
+        atualizarVisor();
+        document.getElementById('modalCalc').style.display = 'flex';
+    }
+
+    function fecharCalc(e) {
+        if (e.target.id === 'modalCalc') {
+            document.getElementById('modalCalc').style.display = 'none';
+        }
+    }
+
+    function addCalc(val) {
+        if (visorValor === '0') visorValor = '';
+        visorValor += val;
+        atualizarVisor();
+    }
+
+    function limparCalc() {
+        visorValor = '0';
+        atualizarVisor();
+    }
+
+    function confirmarCalc() {
+        // Atualiza o estoque
+        const index = estoque.findIndex(i => i.id === itemEditandoId);
+        if (index !== -1) {
+            estoque[index].qtd = visorValor;
+            salvar();
+            renderizar();
+        }
+        document.getElementById('modalCalc').style.display = 'none';
+    }
+
+    function atualizarVisor() {
+        document.getElementById('calcVisor').innerText = visorValor;
+    }
+
+    // --- UTILITÁRIOS ---
+    function salvar() {
+        localStorage.setItem('estoqueFull', JSON.stringify(estoque));
+    }
+
+    function copiarLista() {
+        let texto = "*📦 Estoque Pizzaria*\n\n";
+        estoque.forEach(i => {
+            texto += `- ${i.nome}: ${i.qtd}\n`;
+        });
+        
+        navigator.clipboard.writeText(texto).then(() => {
+            alert("Lista copiada! Cole no WhatsApp.");
+        });
+    }
+
+    function limparTudo() {
+        if(confirm("Apagar TUDO?")) {
+            estoque = [];
+            salvar();
+            renderizar();
+        }
+    }
 </script>
 
 </body>
