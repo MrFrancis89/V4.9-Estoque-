@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Estoque & Compras</title>
+    <title>Estoque Categorias</title>
     
     <link rel="icon" href="icone.png" type="image/png">
     <link rel="apple-touch-icon" href="icone.png">
@@ -25,6 +25,17 @@
             --btn-blue: #1D4ED8;   
             --btn-purple: #6D28D9; 
             --btn-danger: #EF4444; 
+
+            /* Cores das Categorias */
+            --cat-carnes: #ef4444;    /* Vermelho */
+            --cat-laticinios: #fbbf24; /* Amarelo */
+            --cat-horti: #10b981;     /* Verde */
+            --cat-limpeza: #3b82f6;   /* Azul */
+            --cat-mercearia: #8b5cf6; /* Roxo */
+            --cat-padaria: #d97706;   /* Laranja Escuro */
+            --cat-bebidas: #06b6d4;   /* Ciano */
+            --cat-temperos: #f43f5e;  /* Rosa */
+            --cat-outros: #6b7280;    /* Cinza */
         }
 
         body.light-mode {
@@ -52,15 +63,11 @@
         /* --- IMAGEM DA PIZZA NO FUNDO --- */
         body::before {
             content: "";
-            position: fixed;
-            top: 0; left: 0;
+            position: fixed; top: 0; left: 0;
             width: 100vw; height: 100vh;
             background-image: url('fundo-pizza.jpg');
-            background-size: cover;
-            background-position: center;
-            opacity: 0.05; /* Isso equivale a 95% de transparência */
-            z-index: -1; 
-            pointer-events: none; /* Impede que a imagem atrapalhe os cliques na tela */
+            background-size: cover; background-position: center;
+            opacity: 0.05; z-index: -1; pointer-events: none;
         }
         
         .header-container { display: flex; justify-content: center; align-items: center; position: relative; margin: 10px 0; }
@@ -76,24 +83,41 @@
         input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; margin: 0; accent-color: var(--btn-danger); }
         
         select {
-            text-align: center;
-            text-align-last: center;
-            -webkit-appearance: none;
-            appearance: none;
+            text-align: center; text-align-last: center; -webkit-appearance: none; appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23888888' opacity='0.4'%3E%3Cpath d='M7 15l5 5 5-5H7zM7 9l5-5 5 5H7z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 2px center;
-            background-size: 14px;
+            background-repeat: no-repeat; background-position: right 2px center; background-size: 14px;
         }
 
-        button:active, .btn-nav:active, input[type="checkbox"]:active, .btn-theme:active { 
-            transform: scale(0.92); 
-            transition: transform 0.1s ease; 
-        }
+        button:active, .btn-nav:active, input[type="checkbox"]:active, .btn-theme:active { transform: scale(0.92); transition: transform 0.1s ease; }
 
-        .search-container { display: flex; gap: 6px; margin-bottom: 8px; }
-        .input-group { display: grid; grid-template-columns: 1.5fr 0.7fr 0.8fr; gap: 6px; align-items: end; }
+        /* --- ASSISTIVE TOUCH SEARCH --- */
+        #assistive-touch {
+            position: fixed; bottom: 120px; right: 15px; 
+            width: 50px; height: 50px;
+            background-color: rgba(40, 40, 40, 0.95); 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            z-index: 200; opacity: 0.8; transition: opacity 0.3s, transform 0.1s;
+            cursor: pointer; border: 1px solid var(--border); color: #E0E0E0;
+        }
+        body.light-mode #assistive-touch { background-color: rgba(255, 255, 255, 0.95); color: #333; }
+        #assistive-touch:active { opacity: 1; transform: scale(0.92); }
+        #assistive-touch svg { width: 22px; height: 22px; stroke-width: 2.5; }
         
+        #search-overlay {
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+            width: 94%; max-width: 400px;
+            background: rgba(30, 30, 30, 0.98); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border); border-radius: 14px; padding: 12px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6); z-index: 9999; display: none;
+            animation: slideDown 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        body.light-mode #search-overlay { background: rgba(255, 255, 255, 0.98); }
+        @keyframes slideDown { from { transform: translate(-50%, -30px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+        .search-inner { display: flex; gap: 8px; align-items: center; }
+
+        .input-group { display: grid; grid-template-columns: 1.5fr 0.7fr 0.8fr; gap: 6px; align-items: end; }
         .action-group { grid-column: span 3; display: flex; gap: 6px; margin-top: 4px; }
         button { border: none; border-radius: 6px; cursor: pointer; font-weight: 800; text-transform: uppercase; transition: transform 0.1s ease, background-color 0.3s, color 0.3s; }
         .btn-half { flex: 1; padding: 10px; font-size: 10px; } 
@@ -101,24 +125,26 @@
         #add-btn { background-color: var(--btn-add); color: var(--btn-add-text); }
         #add-star-btn { background-color: var(--btn-star); color: var(--btn-star-text); }
         #remove-star-btn { background-color: var(--btn-danger); color: white; } 
-        
         #btn-toggle-lista { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 6px 12px; font-size: 10px; border-radius: 6px; margin-bottom: 8px; width: 100%; transition: all 0.3s; }
         
-        .btn-limpar {
-            position: absolute; right: 5px; bottom: 8px; color: var(--accent);
-            font-size: 13px; padding: 4px; cursor: pointer; transition: transform 0.1s;
-        }
+        .btn-limpar { position: absolute; right: 5px; bottom: 8px; color: var(--accent); font-size: 13px; padding: 4px; cursor: pointer; transition: transform 0.1s; }
         .btn-limpar:active { transform: scale(0.8); color: var(--btn-danger); }
         
-        /* --- ESTILOS DA TABELA SWIPE --- */
+        /* --- ESTILOS DA TABELA --- */
         .table-wrapper { position: relative; overflow-x: hidden; border-radius: 10px; border: 1px solid var(--border); background: var(--card); margin-bottom: 20px; }
         #swipe-bg { position: absolute; right: 0; top: 0; background: var(--btn-danger); color: white; display: none; align-items: center; justify-content: center; width: 80px; z-index: 1; font-weight: bold; cursor: pointer; font-size: 12px; border-bottom: 1px solid var(--border); }
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; touch-action: pan-y; }
         th { background-color: var(--highlight); color: var(--accent); text-align: left; padding: 10px; font-size: 10px; text-transform: uppercase; }
         td { border-bottom: 1px solid var(--border); padding: 8px 6px; font-size: 13px; vertical-align: middle; word-wrap: break-word; overflow-wrap: break-word; background-color: var(--card); }
-        
         tr { position: relative; z-index: 2; transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        
+        /* CABEÇALHO DAS CATEGORIAS */
+        .categoria-header {
+            font-size: 10px; font-weight: 800; text-transform: uppercase; 
+            padding: 8px 10px; letter-spacing: 0.5px;
+            color: #fff; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
         
         .col-check { width: 35px; text-align: center; }
         .col-desc { width: auto; } 
@@ -174,7 +200,6 @@
         .calc-header { display: flex; justify-content: space-between; align-items: center; color: var(--accent); font-size: 12px; font-weight: bold; text-transform: uppercase; }
         #calc-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85%; color: var(--btn-add); }
         body.light-mode #calc-title { color: var(--text); }
-        
         .calc-close { background: transparent; border: none; color: var(--btn-danger); font-size: 20px; padding: 5px; }
         #calc-display { background: var(--edit-bg); color: #FFFFB0; font-size: 32px; text-align: right; padding: 15px; border-radius: 10px; border: 1px solid var(--borda-caixas); min-height: 65px; overflow-x: auto; white-space: nowrap; font-family: monospace; }
         body.light-mode #calc-display { color: #B45309; }
@@ -231,13 +256,15 @@
         </div>
     </div>
 
-    <div class="header-container">
-        <h1 id="titulo-pagina">CONTROLE ESTOQUE</h1>
-        <button class="btn-theme" onclick="alternarTema()">🌓</button>
+    <div id="assistive-touch" onclick="toggleSearch(event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
     </div>
 
-    <div class="card">
-        <div class="search-container">
+    <div id="search-overlay">
+        <div class="search-inner">
             <div style="position: relative; flex: 1;">
                 <input type="text" id="filtroBusca" placeholder="🔍 Buscar..." oninput="filtrarGeral()" style="padding-right: 25px;">
                 <span class="btn-limpar" onclick="limparCampo('filtroBusca')">✖</span>
@@ -246,7 +273,14 @@
                 <option value="">📂 ITENS</option>
             </select>
         </div>
-        <hr style="border: 0; border-top: 1px solid var(--border); margin: 10px 0;">
+    </div>
+
+    <div class="header-container">
+        <h1 id="titulo-pagina">ESTOQUE & CATEGORIAS</h1>
+        <button class="btn-theme" onclick="alternarTema()">🌓</button>
+    </div>
+
+    <div class="card">
         <div class="input-group">
             <div style="position: relative;">
                 <label>Produto</label>
@@ -288,7 +322,7 @@
                     <th class="col-unid">Unid</th>
                 </tr>
             </thead>
-            <tbody id="lista-itens"></tbody>
+            <tbody id="lista-itens-container"></tbody>
         </table>
     </div>
 
@@ -321,6 +355,52 @@
         let audioCtx = null;
         let inputCalculadoraAtual = null;
         let expressaoCalc = "";
+        
+        // --- DADOS E FUNÇÕES DE CATEGORIAS ---
+        const mapaCategorias = {
+            'carnes': ['carne', 'frango', 'bacon', 'calabresa', 'presunto', 'peixe', 'hamburguer', 'linguiça', 'strogonoff', 'costela', 'bife'],
+            'laticinios': ['queijo', 'mussarela', 'cheddar', 'requeijão', 'catupiry', 'leite', 'manteiga', 'iogurte', 'creme de leite', 'parmesão', 'provolone', 'gorgonzola'],
+            'hortifruti': ['tomate', 'cebola', 'alho', 'batata', 'banana', 'limão', 'alface', 'rúcula', 'manjericão', 'pimentão', 'cenoura', 'azeitona', 'milho', 'ervilha', 'palmito', 'cogumelo', 'champignon', 'fruta', 'abacaxi', 'uva'],
+            'mercearia': ['arroz', 'feijão', 'trigo', 'farinha', 'açúcar', 'sal', 'macarrão', 'óleo', 'azeite', 'fermento', 'fubá', 'molho', 'extrato', 'passata', 'ketchup', 'maionese', 'mostarda', 'chocolate', 'café', 'pão'],
+            'temperos': ['orégano', 'pimenta', 'canela', 'colorau', 'caldo', 'tempero', 'ervas', 'salsa', 'cebolinha', 'cominho', 'açafrão', 'páprica', 'curry'],
+            'limpeza': ['detergente', 'sabão', 'esponja', 'água sanitária', 'desinfetante', 'papel', 'saco', 'lixo', 'bucha', 'álcool', 'limpador', 'multiuso', 'pano', 'vassoura'],
+            'bebidas': ['refrigerante', 'coca', 'guaraná', 'suco', 'água', 'cerveja', 'vinho', 'vodka', 'whisky', 'gelo', 'polpa'],
+            'embalagens': ['caixa', 'sacola', 'plástico', 'filme', 'alumínio', 'isopor', 'guardanapo', 'canudo', 'copo']
+        };
+
+        const coresCategorias = {
+            'carnes': 'var(--cat-carnes)',
+            'laticinios': 'var(--cat-laticinios)',
+            'hortifruti': 'var(--cat-horti)',
+            'mercearia': 'var(--cat-mercearia)',
+            'temperos': 'var(--cat-temperos)',
+            'limpeza': 'var(--cat-limpeza)',
+            'bebidas': 'var(--cat-bebidas)',
+            'embalagens': 'var(--cat-outros)',
+            'outros': 'var(--cat-outros)'
+        };
+
+        const nomesCategorias = {
+            'carnes': '🥩 CARNES & FRIOS',
+            'laticinios': '🧀 LATICÍNIOS',
+            'hortifruti': '🥦 HORTIFRUTI',
+            'mercearia': '🍝 MERCEARIA & GRÃOS',
+            'temperos': '🧂 TEMPEROS',
+            'limpeza': '🧽 LIMPEZA & DESCARTÁVEIS',
+            'bebidas': '🥤 BEBIDAS',
+            'embalagens': '📦 EMBALAGENS',
+            'outros': '📦 OUTROS'
+        };
+
+        function identificarCategoria(nomeItem) {
+            let nome = nomeItem.toLowerCase();
+            for (let cat in mapaCategorias) {
+                if (mapaCategorias[cat].some(termo => nome.includes(termo))) {
+                    return cat;
+                }
+            }
+            return 'outros';
+        }
 
         function darFeedback() {
             if (navigator.vibrate) { navigator.vibrate(15); } 
@@ -330,63 +410,83 @@
                     audioCtx = new AudioContext();
                 }
                 if (audioCtx.state === 'suspended') { audioCtx.resume(); }
-
                 const osc = audioCtx.createOscillator(); 
                 const gain = audioCtx.createGain();
-                
                 osc.type = 'sine'; 
                 osc.frequency.setValueAtTime(800, audioCtx.currentTime); 
                 osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.02);
-                
                 gain.gain.setValueAtTime(0.15, audioCtx.currentTime); 
                 gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.02);
-                
-                osc.connect(gain); 
-                gain.connect(audioCtx.destination); 
-                
-                osc.start(audioCtx.currentTime); 
-                osc.stop(audioCtx.currentTime + 0.03);
+                osc.connect(gain); gain.connect(audioCtx.destination); 
+                osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.03);
             } catch (e) {}
         }
 
-        // --- SISTEMA DE SWIPE (DESLIZAR) 100% BLINDADO CONTRA CLIQUES FALSOS ---
+        function toggleSearch(event) {
+            if (event) event.stopPropagation();
+            darFeedback();
+            const overlay = document.getElementById('search-overlay');
+            const btn = document.getElementById('assistive-touch');
+            
+            if (overlay.style.display === 'block') {
+                overlay.style.display = 'none';
+                btn.style.opacity = '0.8'; 
+            } else {
+                overlay.style.display = 'block';
+                overlay.style.top = (window.scrollY + 15) + 'px';
+                btn.style.opacity = '0'; 
+                document.getElementById('filtroBusca').focus(); 
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            const overlay = document.getElementById('search-overlay');
+            const btn = document.getElementById('assistive-touch');
+            const isClickInside = overlay.contains(event.target) || btn.contains(event.target);
+            if (!isClickInside && overlay.style.display === 'block') {
+                toggleSearch(null); 
+            }
+        });
+
+        window.addEventListener('scroll', function() {
+            var overlay = document.getElementById('search-overlay');
+            if (overlay.style.display === 'block') {
+                overlay.style.top = (window.scrollY + 15) + 'px';
+            }
+        });
+
         let swipeStartX = 0, swipeStartY = 0, swipeCurrentX = 0;
         let isSwiping = false, swipedRow = null, justSwiped = false;
 
         function initSwipe() {
-            const tbody = document.getElementById("lista-itens");
+            const container = document.getElementById("lista-itens-container");
             const swipeBtn = document.getElementById("swipe-bg");
 
             function getClientX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
             function getClientY(e) { return e.touches ? e.touches[0].clientY : e.clientY; }
 
-            tbody.addEventListener('touchstart', function(e) {
+            container.addEventListener('touchstart', function(e) {
                 let tr = e.target.closest('tr');
-                if (!tr) return;
+                if (!tr || tr.classList.contains('categoria-header-row')) return;
                 
-                // Ignora cliques no checkbox para não travar marcação
                 if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') return;
-
                 if (swipedRow && swipedRow !== tr) closeSwipe(swipedRow);
 
                 swipeStartX = getClientX(e);
                 swipeStartY = getClientY(e);
-                isSwiping = false;
-                justSwiped = false;
+                isSwiping = false; justSwiped = false;
                 swipeCurrentX = (swipedRow === tr) ? -80 : 0;
                 tr.style.transition = 'none';
             }, {passive: true});
 
-            tbody.addEventListener('touchmove', function(e) {
+            container.addEventListener('touchmove', function(e) {
                 let tr = e.target.closest('tr');
-                if (!tr) return;
+                if (!tr || tr.classList.contains('categoria-header-row')) return;
                 if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') return;
 
                 let deltaX = getClientX(e) - swipeStartX;
                 let deltaY = getClientY(e) - swipeStartY;
 
-                // NOVA REGRA DE SEGURANÇA: Tem que arrastar mais de 15px de propósito
-                // Se o dedo só tremer, ele ignora o arrasto e mantém como clique normal.
                 if (!isSwiping && Math.abs(deltaX) > 15 && Math.abs(deltaX) > Math.abs(deltaY)) {
                     isSwiping = true;
                 }
@@ -394,24 +494,20 @@
                 if (isSwiping) {
                     if (e.cancelable) e.preventDefault(); 
                     if (document.activeElement) document.activeElement.blur();
-
                     justSwiped = true;
-                    
-                    // O botão vermelho só aparece DEPOIS que passa pela segurança
                     swipeBtn.style.display = 'flex';
-                    swipeBtn.style.top = tr.offsetTop + 'px';
+                    swipeBtn.style.top = tr.getBoundingClientRect().top + window.scrollY + 'px'; // Fix pos
                     swipeBtn.style.height = tr.offsetHeight + 'px';
 
                     let moveX = swipeCurrentX + deltaX;
-                    if (moveX > 0) moveX = 0; 
-                    if (moveX < -100) moveX = -100; 
+                    if (moveX > 0) moveX = 0; if (moveX < -100) moveX = -100; 
                     tr.style.transform = `translateX(${moveX}px)`;
                 }
             }, {passive: false});
 
-            tbody.addEventListener('touchend', function(e) {
+            container.addEventListener('touchend', function(e) {
                 let tr = e.target.closest('tr');
-                if (!tr) return;
+                if (!tr || tr.classList.contains('categoria-header-row')) return;
 
                 if (isSwiping) {
                     let deltaX = (e.changedTouches ? e.changedTouches[0].clientX : e.clientX) - swipeStartX;
@@ -421,26 +517,15 @@
                     if (finalX < -40) {
                         tr.style.transform = `translateX(-80px)`;
                         swipedRow = tr;
-                        
                         swipeBtn.onclick = function() {
                             mostrarConfirmacao("Deseja realmente remover este item?", () => {
-                                tr.remove(); 
-                                salvarDados(); 
-                                atualizarDropdown(); 
-                                mostrarToast("Removido 🗑️");
-                                swipeBtn.style.display = 'none'; 
-                                swipedRow = null;
+                                tr.remove(); salvarDados(); atualizarDropdown(); mostrarToast("Removido 🗑️");
+                                swipeBtn.style.display = 'none'; swipedRow = null;
                             });
                         };
-                    } else {
-                        closeSwipe(tr);
-                    }
-                    
-                    // Trava o clique na calculadora/unidade por meio segundo se tiver arrastado
+                    } else { closeSwipe(tr); }
                     setTimeout(() => { justSwiped = false; }, 300);
-                } else {
-                    justSwiped = false; // Foi apenas um clique! Libera o sistema.
-                }
+                } else { justSwiped = false; }
             });
 
             document.addEventListener('touchstart', function(e) {
@@ -463,15 +548,9 @@
             }, 300);
         }
 
-        // --- LÓGICA DA CALCULADORA ---
         function abrirCalculadora(inputElement) {
-            // Se o usuário arrastou o dedo, isso impede a calculadora de abrir sem querer!
             if (justSwiped || swipedRow) return;
-
-            darFeedback();
-            inputElement.blur(); 
-            inputCalculadoraAtual = inputElement;
-            
+            darFeedback(); inputElement.blur(); inputCalculadoraAtual = inputElement;
             let tituloCalc = "🧮 Calculadora";
             if (inputElement.id === "novoQtd") {
                 let nomeNovo = document.getElementById("novoProduto").value.trim();
@@ -484,28 +563,21 @@
                 }
             }
             document.getElementById("calc-title").innerText = tituloCalc;
-            
             let val = inputElement.value.replace(',', '.').trim();
             expressaoCalc = val || "";
             atualizarDisplayCalc();
-            
             document.getElementById('modal-calc').style.display = 'flex';
         }
 
         function fecharCalculadora() {
-            darFeedback();
-            document.getElementById('modal-calc').style.display = 'none';
-            inputCalculadoraAtual = null;
+            darFeedback(); document.getElementById('modal-calc').style.display = 'none'; inputCalculadoraAtual = null;
         }
 
         function calcDigito(digito) {
             darFeedback();
             if (digito === 'C') { expressaoCalc = ""; } 
             else if (digito === 'BACK') { expressaoCalc = expressaoCalc.slice(0, -1); } 
-            else {
-                if (digito === ',') digito = '.';
-                expressaoCalc += digito;
-            }
+            else { if (digito === ',') digito = '.'; expressaoCalc += digito; }
             atualizarDisplayCalc();
         }
 
@@ -519,19 +591,13 @@
             try {
                 let expr = expressaoCalc.replace(/×/g, '*').replace(/÷/g, '/');
                 expr = expr.replace(/[^0-9+\-*/.]/g, ''); 
-
                 if (expr) {
                     let resultado = Function('"use strict";return (' + expr + ')')();
                     if (!isFinite(resultado)) throw new Error("Erro");
-
                     resultado = Math.round(resultado * 100) / 100;
                     inputCalculadoraAtual.value = resultado.toString().replace('.', ',');
-                } else {
-                    inputCalculadoraAtual.value = "";
-                }
-                salvarDados();
-                fecharCalculadora();
-                mostrarToast("Quantidade Salva ✅");
+                } else { inputCalculadoraAtual.value = ""; }
+                salvarDados(); fecharCalculadora(); mostrarToast("Quantidade Salva ✅");
             } catch (e) {
                 document.getElementById('calc-display').innerText = "Erro";
                 setTimeout(atualizarDisplayCalc, 1000);
@@ -539,19 +605,14 @@
         }
 
         function limparCampo(idCaixaTexto) {
-            darFeedback(); 
-            document.getElementById(idCaixaTexto).value = ''; 
-            document.getElementById(idCaixaTexto).focus(); 
-            if (idCaixaTexto === 'filtroBusca') {
-                filtrarGeral();
-            }
+            darFeedback(); document.getElementById(idCaixaTexto).value = ''; document.getElementById(idCaixaTexto).focus(); 
+            if (idCaixaTexto === 'filtroBusca') { filtrarGeral(); }
         }
 
         function alternarLista() {
             darFeedback();
             var tabelaWrapper = document.querySelector(".table-wrapper");
             var btnToggle = document.getElementById("btn-toggle-lista");
-
             if (tabelaWrapper.style.display === "none") {
                 tabelaWrapper.style.display = "block";
                 btnToggle.innerHTML = "🔽 Ocultar Lista de Estoque";
@@ -567,7 +628,6 @@
         }
 
         let acaoConfirmacao = null;
-
         function mostrarToast(msg) {
             const container = document.getElementById('toast-container'); const toast = document.createElement('div');
             toast.className = 'toast'; toast.innerText = msg; container.appendChild(toast);
@@ -590,22 +650,23 @@
         }
 
         function fecharModal() { document.getElementById('modal-confirm').style.display = 'none'; acaoConfirmacao = null; }
-
-        document.getElementById('modal-btn-confirm').addEventListener('click', () => {
-            darFeedback(); if(acaoConfirmacao) acaoConfirmacao(); fecharModal();
-        });
+        document.getElementById('modal-btn-confirm').addEventListener('click', () => { darFeedback(); if(acaoConfirmacao) acaoConfirmacao(); fecharModal(); });
 
         function obterDataAtual() { return new Date().toLocaleDateString('pt-BR'); }
         function obterDataAmanha() { let hoje = new Date(); let amanha = new Date(hoje); amanha.setDate(hoje.getDate() + 1); return amanha.toLocaleDateString('pt-BR'); }
-        
         function atualizarTitulos() { 
             document.getElementById("titulo-pagina").innerText = "ESTOQUE " + obterDataAtual(); 
             document.getElementById("titulo-compras").innerText = "LISTA " + obterDataAmanha(); 
         }
 
         var produtosPadrao = ["4 queijos|kg", "Açúcar|kg", "Alho frito|pct", "Azeitona|uni", "Bacon|kg", "Banana|kg", "Batata palha|pct", "Caixa|uni", "Calabresa|kg", "Canela|pct", "Carne|kg", "Cebola|kg", "Cheddar|uni", "Chocolate branco|kg", "Chocolate preto|kg", "Colorau|pct", "Detergente|uni", "Esponja|uni", "Fermento|uni", "Frango cozido|kg", "Frango cru|kg", "Fubá|kg", "Gelo|pct", "Milho|uni", "Molho|uni", "Mussarela|kg", "Óleo|uni", "Orégano|pct", "Ovo|uni", "Palha de aço|uni", "Papel toalhas|uni", "Plástico filme|uni", "Presunto|kg", "Requeijão|uni", "Saco p lixo|uni", "Saco plástico|uni", "Sal|kg", "Strogonoff|kg", "Tempero caldo de carne|cx", "Tempero caldo de frango|cx", "Tempero em pó carne|cx", "Tempero em pó frango|cx", "Trigo|kg"];
+        
+        // Usei v4 para não conflitar com seu teste anterior
+        var storageKey = "estoqueDados_v4_categorias";
+        var storageOcultos = "itensOcultosPadrao_v4";
+        var storageMeus = "meusItensPadrao_v4";
 
-        var tbody = document.getElementById("lista-itens");
+        var containerItens = document.getElementById("lista-itens-container");
         var selectFiltro = document.getElementById("filtroSelect");
         var buscaInput = document.getElementById("filtroBusca");
         var areaCompras = document.getElementById("area-compras");
@@ -613,7 +674,7 @@
 
         function carregarListaPadrao() {
             var listaCombinada = [];
-            var ocultosSistema = JSON.parse(localStorage.getItem("itensOcultosPadrao_v3") || "[]");
+            var ocultosSistema = JSON.parse(localStorage.getItem(storageOcultos) || "[]");
             
             produtosPadrao.forEach(p => { 
                 var d = p.split("|"); 
@@ -622,23 +683,22 @@
                 }
             });
 
-            var favoritosUsuario = JSON.parse(localStorage.getItem("meusItensPadrao_v3") || "[]");
+            var favoritosUsuario = JSON.parse(localStorage.getItem(storageMeus) || "[]");
             favoritosUsuario.forEach(item => {
                 if(!listaCombinada.some(i => i.n.toLowerCase() === item.n.toLowerCase())) {
                     listaCombinada.push({ n: item.n, q: "", u: item.u, c: false });
                 }
             });
 
-            listaCombinada.sort((a, b) => a.n.localeCompare(b.n));
-            listaCombinada.forEach(i => inserirLinha(i.n, i.q, i.u, i.c));
+            renderizarListaCompleta(listaCombinada);
         }
 
         function iniciarApp() {
             if(localStorage.getItem('temaEstoque') === 'claro') { document.body.classList.add('light-mode'); }
             atualizarTitulos();
-            var salvos = localStorage.getItem("estoqueDados_v3");
+            var salvos = localStorage.getItem(storageKey);
             if (salvos && JSON.parse(salvos).length > 0) {
-                var dados = JSON.parse(salvos); dados.sort((a, b) => a.n.localeCompare(b.n)); dados.forEach(i => inserirLinha(i.n, i.q, i.u, i.c || false));
+                renderizarListaCompleta(JSON.parse(salvos));
             } else {
                 carregarListaPadrao();
             }
@@ -646,26 +706,45 @@
             initSwipe(); 
         }
 
-        function salvarDados() {
-            var dados = [];
-            document.querySelectorAll("#lista-itens tr").forEach(r => {
-                var c = r.querySelectorAll("td");
-                dados.push({ 
-                    n: c[1].innerText.replace(/(\r\n|\n|\r)/gm, " ").trim(), q: c[2].querySelector("input").value.trim(), 
-                    u: c[3].querySelector("select").value, c: c[0].querySelector("input[type='checkbox']").checked
-                });
+        // --- SISTEMA DE RENDERIZAÇÃO COM CATEGORIAS ---
+        function renderizarListaCompleta(dados) {
+            containerItens.innerHTML = "";
+            dados.sort((a, b) => a.n.localeCompare(b.n));
+
+            // Agrupa os itens
+            let grupos = {
+                'carnes': [], 'laticinios': [], 'hortifruti': [], 'mercearia': [],
+                'temperos': [], 'limpeza': [], 'bebidas': [], 'embalagens': [], 'outros': []
+            };
+
+            dados.forEach(item => {
+                let cat = identificarCategoria(item.n);
+                grupos[cat].push(item);
             });
-            localStorage.setItem("estoqueDados_v3", JSON.stringify(dados));
-            var s = document.getElementById("status-save"); s.style.opacity = "1"; setTimeout(() => s.style.opacity = "0", 1500);
-            atualizarPainelCompras();
+
+            // Renderiza cada grupo
+            for (let cat in grupos) {
+                if (grupos[cat].length > 0) {
+                    // Cabeçalho da Categoria
+                    let trHeader = document.createElement("tr");
+                    trHeader.classList.add("categoria-header-row");
+                    trHeader.innerHTML = `<td colspan="4" class="categoria-header" style="background-color: ${coresCategorias[cat]}">${nomesCategorias[cat]}</td>`;
+                    containerItens.appendChild(trHeader);
+
+                    // Itens daquela categoria
+                    grupos[cat].forEach(item => {
+                        inserirLinhaNoDOM(item.n, item.q, item.u, item.c);
+                    });
+                }
+            }
         }
 
-        function inserirLinha(n, q, u, chk) {
+        function inserirLinhaNoDOM(n, q, u, chk) {
             var tr = document.createElement("tr");
             if(chk) tr.classList.add("linha-marcada");
             tr.innerHTML = `
                 <td class="col-check"><input type="checkbox" onchange="alternarCheck(this)" ${chk ? 'checked' : ''}></td>
-                <td class="col-desc"><span contenteditable="true" class="nome-prod" onblur="salvarEOrdenar()">${n}</span></td>
+                <td class="col-desc"><span contenteditable="true" class="nome-prod" onblur="salvarEAtualizar()">${n}</span></td>
                 <td class="col-qtd"><input type="text" class="input-qtd-tabela" value="${q}" onclick="abrirCalculadora(this)" readonly></td>
                 <td class="col-unid"><select class="select-tabela" onchange="salvarDados()">
                     <option value="kg" ${u==='kg'?'selected':''}>kg</option><option value="g" ${u==='g'?'selected':''}>g</option>
@@ -674,22 +753,45 @@
                     <option value="crt" ${u==='crt'?'selected':''}>crt</option>
                 </select></td>
             `;
-            tbody.appendChild(tr);
+            containerItens.appendChild(tr);
+        }
+
+        function salvarDados() {
+            var dados = [];
+            // Varre todas as linhas de produto (ignora headers)
+            document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => {
+                var c = r.querySelectorAll("td");
+                if (c.length > 0) {
+                    dados.push({ 
+                        n: c[1].innerText.replace(/(\r\n|\n|\r)/gm, " ").trim(), 
+                        q: c[2].querySelector("input").value.trim(), 
+                        u: c[3].querySelector("select").value, 
+                        c: c[0].querySelector("input[type='checkbox']").checked
+                    });
+                }
+            });
+            localStorage.setItem(storageKey, JSON.stringify(dados));
+            var s = document.getElementById("status-save"); s.style.opacity = "1"; setTimeout(() => s.style.opacity = "0", 1500);
+            atualizarPainelCompras();
+        }
+
+        function salvarEAtualizar() {
+            salvarDados();
+            // Recarrega a lista para re-categorizar caso o nome tenha mudado
+            var dados = JSON.parse(localStorage.getItem(storageKey));
+            renderizarListaCompleta(dados);
+            atualizarDropdown();
         }
 
         function alternarTodos(masterBox) {
             darFeedback();
             let isChecked = masterBox.checked;
-            
-            document.querySelectorAll("#lista-itens tr").forEach(r => {
+            document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => {
                 if (r.style.display !== "none") {
                     let box = r.querySelector("input[type='checkbox']");
                     box.checked = isChecked;
-                    if (isChecked) {
-                        r.classList.add("linha-marcada");
-                    } else {
-                        r.classList.remove("linha-marcada");
-                    }
+                    if (isChecked) { r.classList.add("linha-marcada"); } 
+                    else { r.classList.remove("linha-marcada"); }
                 }
             });
             salvarDados();
@@ -697,18 +799,14 @@
 
         function alternarCheck(box) {
             darFeedback(); var linha = box.parentElement.parentElement;
-            if(box.checked) { 
-                linha.classList.add("linha-marcada"); 
-            } else { 
-                linha.classList.remove("linha-marcada");
-                document.getElementById('check-todos').checked = false;
-            }
+            if(box.checked) { linha.classList.add("linha-marcada"); } 
+            else { linha.classList.remove("linha-marcada"); document.getElementById('check-todos').checked = false; }
             salvarDados(); 
         }
 
         function atualizarPainelCompras() {
             ulCompras.innerHTML = ""; var temItens = false;
-            document.querySelectorAll("#lista-itens tr").forEach(r => {
+            document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => {
                 var checkbox = r.querySelector("input[type='checkbox']");
                 if (checkbox && checkbox.checked) {
                     temItens = true; var li = document.createElement("li");
@@ -719,28 +817,40 @@
             areaCompras.style.display = temItens ? "block" : "none";
         }
 
+        // --- EXPORTAÇÃO (MANTÉM LISTA ÚNICA SEM CATEGORIAS) ---
         function gerarTextoCompras() {
             var t = `*LISTA DE COMPRAS ${obterDataAmanha()}*\n\n`;
-            document.querySelectorAll("#lista-itens tr").forEach(r => {
+            // Itera diretamente sobre o DOM para pegar o que está marcado, ignorando headers
+            let itens = [];
+            document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => {
                 var check = r.querySelector("input[type='checkbox']");
-                if (check && check.checked) { t += `${r.querySelector(".nome-prod").innerText.replace(/(\r\n|\n|\r)/gm, " ").trim()}\n`; }
+                if (check && check.checked) { 
+                    itens.push(r.querySelector(".nome-prod").innerText.replace(/(\r\n|\n|\r)/gm, " ").trim());
+                }
             });
+            itens.sort(); // Opcional: ordena alfabeticamente para ficar bonitinho
+            itens.forEach(i => t += `${i}\n`);
+            return t;
+        }
+
+        function gerarTextoEstoque() {
+            var t = `*ESTOQUE ${obterDataAtual()}*\n\n`;
+            let itens = [];
+            document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => {
+                var c = r.querySelectorAll("td"); 
+                var nome = c[1].innerText.replace(/(\r\n|\n|\r)/gm, " ").trim();
+                var qTxt = c[2].querySelector("input").value.trim(); 
+                var unidade = c[3].querySelector("select").options[c[3].querySelector("select").selectedIndex].text;
+                if(qTxt !== "") { itens.push(`${nome}: ${qTxt} ${unidade}`); } 
+                else { itens.push(`${nome}:   ${unidade}`); }
+            });
+            itens.sort();
+            itens.forEach(i => t += `${i}\n`);
             return t;
         }
 
         function copiarCompras() { copiarParaClipboard(gerarTextoCompras()); }
         function compartilharComprasZap() { window.open("https://wa.me/?text=" + encodeURIComponent(gerarTextoCompras()), '_blank'); }
-
-        function gerarTextoEstoque() {
-            var t = `*ESTOQUE ${obterDataAtual()}*\n\n`;
-            document.querySelectorAll("#lista-itens tr").forEach(r => {
-                var c = r.querySelectorAll("td"); var nome = c[1].innerText.replace(/(\r\n|\n|\r)/gm, " ").trim();
-                var qTxt = c[2].querySelector("input").value.trim(); var unidade = c[3].querySelector("select").options[c[3].querySelector("select").selectedIndex].text;
-                if(qTxt !== "") { t += `${nome}: ${qTxt} ${unidade}\n`; } else { t += `${nome}:   ${unidade}\n`; }
-            });
-            return t;
-        }
-
         function copiarEstoque() { copiarParaClipboard(gerarTextoEstoque()); }
         function compartilharEstoque() { window.open("https://wa.me/?text=" + encodeURIComponent(gerarTextoEstoque()), '_blank'); }
 
@@ -757,14 +867,6 @@
             try { document.execCommand('copy'); mostrarToast("Copiado com sucesso! ✅"); } catch (err) { mostrarAlertaElegante("Erro ao copiar."); }
             document.body.removeChild(textArea);
         }
-
-        function salvarEOrdenar() { salvarDados(); reordenarTabela(); atualizarDropdown(); }
-        
-        function reordenarTabela() {
-            var rows = Array.from(tbody.querySelectorAll("tr"));
-            rows.sort((a, b) => a.querySelector(".nome-prod").innerText.localeCompare(b.querySelector(".nome-prod").innerText));
-            rows.forEach(row => tbody.appendChild(row));
-        }
         
         function adicionarManual(salvarNoPadrao) {
             var p = document.getElementById("novoProduto").value.trim();
@@ -773,21 +875,20 @@
             if (!p) { mostrarToast("⚠️ Digite o nome do produto!"); return; }
             darFeedback();
             
-            inserirLinha(p, q, u, false); 
-            salvarEOrdenar(); 
+            // Adiciona aos dados atuais e re-renderiza tudo para entrar na categoria certa
+            var dados = JSON.parse(localStorage.getItem(storageKey) || "[]");
+            dados.push({ n: p, q: q, u: u, c: false });
+            renderizarListaCompleta(dados);
+            salvarDados();
             
             if(salvarNoPadrao) {
-                var favoritosUsuario = JSON.parse(localStorage.getItem("meusItensPadrao_v3") || "[]");
+                var favoritosUsuario = JSON.parse(localStorage.getItem(storageMeus) || "[]");
                 if(!favoritosUsuario.some(item => item.n.toLowerCase() === p.toLowerCase())) {
                     favoritosUsuario.push({ n: p, u: u });
-                    localStorage.setItem("meusItensPadrao_v3", JSON.stringify(favoritosUsuario));
+                    localStorage.setItem(storageMeus, JSON.stringify(favoritosUsuario));
                     mostrarToast("Item FIXADO no padrão! ⭐");
-                } else {
-                    mostrarToast("Item já estava fixado! ➕");
-                }
-            } else {
-                mostrarToast("Adicionado! ➕");
-            }
+                } else { mostrarToast("Item já estava fixado! ➕"); }
+            } else { mostrarToast("Adicionado! ➕"); }
 
             document.getElementById("novoProduto").value = ""; 
             document.getElementById("novoQtd").value = "";
@@ -795,36 +896,59 @@
         
         function removerDoPadrao() {
             var p = document.getElementById("novoProduto").value.trim();
-            if (!p) { mostrarToast("⚠️ Digite o nome do produto na caixa para remover!"); return; }
+            if (!p) { mostrarToast("⚠️ Digite o nome para remover!"); return; }
             darFeedback();
 
-            var favoritosUsuario = JSON.parse(localStorage.getItem("meusItensPadrao_v3") || "[]");
+            var favoritosUsuario = JSON.parse(localStorage.getItem(storageMeus) || "[]");
             var novaListaFavoritos = favoritosUsuario.filter(item => item.n.toLowerCase() !== p.toLowerCase());
-            localStorage.setItem("meusItensPadrao_v3", JSON.stringify(novaListaFavoritos));
+            localStorage.setItem(storageMeus, JSON.stringify(novaListaFavoritos));
 
-            var ocultosSistema = JSON.parse(localStorage.getItem("itensOcultosPadrao_v3") || "[]");
+            var ocultosSistema = JSON.parse(localStorage.getItem(storageOcultos) || "[]");
             if (!ocultosSistema.includes(p.toLowerCase())) {
                 ocultosSistema.push(p.toLowerCase());
-                localStorage.setItem("itensOcultosPadrao_v3", JSON.stringify(ocultosSistema));
+                localStorage.setItem(storageOcultos, JSON.stringify(ocultosSistema));
             }
 
-            document.querySelectorAll("#lista-itens tr").forEach(r => {
+            // Remove da tela
+            document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => {
                 var nomeTabela = r.querySelector(".nome-prod").innerText.toLowerCase();
                 if(nomeTabela === p.toLowerCase()) { r.remove(); }
             });
-
-            salvarDados(); atualizarDropdown();
-            mostrarToast("Removido do padrão! 🚫");
-            document.getElementById("novoProduto").value = "";
-            document.getElementById("novoQtd").value = "";
+            salvarDados(); atualizarDropdown(); mostrarToast("Removido do padrão! 🚫");
+            document.getElementById("novoProduto").value = ""; document.getElementById("novoQtd").value = "";
         }
 
         function filtrarGeral() {
             var tBusca = buscaInput.value.toLowerCase(); var tSelect = selectFiltro.value.toLowerCase();
-            document.querySelectorAll("#lista-itens tr").forEach(r => {
+            
+            // Filtra as linhas de itens
+            document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => {
                 var nome = r.querySelector(".nome-prod").innerText.toLowerCase();
-                r.style.display = (nome.includes(tBusca) && (tSelect === "" || nome === tSelect)) ? "" : "none";
+                if (nome.includes(tBusca) && (tSelect === "" || nome === tSelect)) {
+                    r.style.display = "";
+                } else {
+                    r.style.display = "none";
+                }
             });
+
+            // Esconde os cabeçalhos de categoria que ficaram vazios
+            // Primeiro, pega todos os headers
+            let headers = document.querySelectorAll(".categoria-header-row");
+            headers.forEach(header => {
+                let proximoElem = header.nextElementSibling;
+                let temItemVisivel = false;
+                
+                // Olha para frente até achar outro header ou acabar a lista
+                while(proximoElem && !proximoElem.classList.contains("categoria-header-row")) {
+                    if (proximoElem.style.display !== "none") {
+                        temItemVisivel = true;
+                        break;
+                    }
+                    proximoElem = proximoElem.nextElementSibling;
+                }
+                header.style.display = temItemVisivel ? "" : "none";
+            });
+
             document.getElementById('check-todos').checked = false;
         }
         
@@ -837,29 +961,30 @@
         
         function resetarTudo() { 
             mostrarConfirmacao("ATENÇÃO: Isso restaurará a lista de fábrica do ZERO.\nConfirmar?", () => { 
-                localStorage.removeItem("estoqueDados_v3"); 
-                localStorage.removeItem("itensOcultosPadrao_v3");
+                localStorage.removeItem(storageKey); 
+                localStorage.removeItem(storageOcultos);
                 location.reload(); 
             }); 
         }
 
         function iniciarNovoDia() {
             mostrarConfirmacao("INICIAR NOVO DIA?\nIsso limpará as quantidades e desmarcará as compras.", () => {
-                var dados = JSON.parse(localStorage.getItem("estoqueDados_v3") || "[]");
+                var dados = JSON.parse(localStorage.getItem(storageKey) || "[]");
                 dados.forEach(item => { item.q = ""; item.c = false; });
-                localStorage.setItem("estoqueDados_v3", JSON.stringify(dados)); 
+                localStorage.setItem(storageKey, JSON.stringify(dados)); 
                 document.getElementById('check-todos').checked = false;
                 location.reload();
             }, 'sucesso');
         }
 
         function salvarListaNoCelular() {
-            var dados = localStorage.getItem("estoqueDados_v3");
+            var dados = localStorage.getItem(storageKey);
             if (!dados || dados === "[]") { mostrarToast("⚠️ Não há dados para salvar!"); return; }
             darFeedback();
+            // Salva JSON puro sem categorias para ser compatível
             var blob = new Blob([dados], { type: "application/json" });
             var url = URL.createObjectURL(blob); var a = document.createElement("a"); a.href = url;
-            a.download = "MEU_ESTOQUE_" + obterDataAtual().replace(/\//g, "-") + ".json";
+            a.download = "ESTOQUE_CATEGORIAS_" + obterDataAtual().replace(/\//g, "-") + ".json";
             document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
             mostrarToast("Backup salvo no celular! 💾");
         }
@@ -871,7 +996,7 @@
                 try {
                     var dados = JSON.parse(e.target.result);
                     if (Array.isArray(dados)) { 
-                        localStorage.setItem("estoqueDados_v3", JSON.stringify(dados)); 
+                        localStorage.setItem(storageKey, JSON.stringify(dados)); 
                         mostrarAlertaElegante("Lista carregada com sucesso! A página será atualizada.");
                         setTimeout(() => location.reload(), 1500); 
                     } else { mostrarAlertaElegante("Arquivo inválido."); }
@@ -884,9 +1009,11 @@
             var inputNome = document.getElementById("novoProduto").value.toLowerCase().trim();
             if (inputNome.length < 2) return; 
             var unidadeEncontrada = null;
+            // Busca na lista padrão
             var matchPadrao = produtosPadrao.find(p => p.split("|")[0].toLowerCase().startsWith(inputNome));
             if (matchPadrao) { unidadeEncontrada = matchPadrao.split("|")[1]; } else {
-                var rows = Array.from(tbody.querySelectorAll("tr"));
+                // Busca na lista atual do DOM
+                var rows = Array.from(document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)"));
                 var matchTabela = rows.find(r => r.querySelector(".nome-prod").innerText.toLowerCase().startsWith(inputNome));
                 if (matchTabela) { unidadeEncontrada = matchTabela.querySelector(".select-tabela").value; }
             }
