@@ -92,7 +92,7 @@
         }
         .btn-limpar:active { transform: scale(0.8); color: var(--btn-danger); }
         
-        /* --- ESTILOS DA TABELA ATUALIZADOS PARA SWIPE --- */
+        /* --- ESTILOS DA TABELA SWIPE --- */
         .table-wrapper { position: relative; overflow-x: hidden; border-radius: 10px; border: 1px solid var(--border); background: var(--card); margin-bottom: 20px; }
         #swipe-bg { position: absolute; right: 0; top: 0; background: var(--btn-danger); color: white; display: none; align-items: center; justify-content: center; width: 80px; z-index: 1; font-weight: bold; cursor: pointer; font-size: 12px; border-bottom: 1px solid var(--border); }
         
@@ -331,7 +331,7 @@
             } catch (e) {}
         }
 
-        // --- SISTEMA DE SWIPE PARA APAGAR ---
+        // --- SISTEMA DE SWIPE (DESLIZAR) MELHORADO ---
         let swipeStartX = 0, swipeStartY = 0, swipeCurrentX = 0;
         let isDragging = false, swipedRow = null;
 
@@ -346,8 +346,8 @@
                 let tr = e.target.closest('tr');
                 if (!tr) return;
                 
-                // Ignora o gesto se o usuário tocou em uma caixa de texto, botão ou select
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') {
+                // NOVO: Ignora o gesto APENAS se o usuário tocou no Checkbox do carrinho
+                if (e.target.type === 'checkbox') {
                     if (swipedRow && swipedRow !== tr) closeSwipe(swipedRow);
                     return;
                 }
@@ -373,9 +373,14 @@
                 let deltaX = getClientX(e) - swipeStartX;
                 let deltaY = getClientY(e) - swipeStartY;
 
-                // Garante que o arrasto é horizontal e anula o movimento se for vertical
+                // Detecta se o movimento é Horizontal (Deslize)
                 if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 5) {
+                    // Previne ações padrão como rolar a tela, abrir teclado ou menus
                     if (e.cancelable) e.preventDefault(); 
+                    
+                    // Se começou a deslizar em cima de uma caixa, nós removemos o foco para ela não abrir
+                    if (document.activeElement) document.activeElement.blur();
+
                     let moveX = swipeCurrentX + deltaX;
                     if (moveX > 0) moveX = 0; 
                     if (moveX < -100) moveX = -100; 
@@ -397,7 +402,6 @@
                     tr.style.transform = `translateX(-80px)`;
                     swipedRow = tr;
                     
-                    // Ação de apagar o item
                     swipeBtn.onclick = function() {
                         mostrarConfirmacao("Deseja realmente remover este item?", () => {
                             tr.remove(); 
@@ -413,7 +417,6 @@
                 }
             });
 
-            // Fechar o botão de apagar se clicar fora da linha
             document.addEventListener('touchstart', function(e) {
                 if (swipedRow && !swipedRow.contains(e.target) && e.target.id !== 'swipe-bg') {
                     closeSwipe(swipedRow);
@@ -436,6 +439,9 @@
 
         // --- LÓGICA DA CALCULADORA ---
         function abrirCalculadora(inputElement) {
+            // SEGURANÇA: Se estiver arrastando a linha (swipe), não abre a calculadora
+            if (isDragging || swipedRow) return;
+
             darFeedback();
             inputElement.blur(); 
             inputCalculadoraAtual = inputElement;
@@ -611,7 +617,7 @@
                 carregarListaPadrao();
             }
             atualizarDropdown(); atualizarPainelCompras();
-            initSwipe(); // Inicializa o motor de deslizar após carregar a tabela
+            initSwipe(); 
         }
 
         function salvarDados() {
@@ -631,7 +637,6 @@
         function inserirLinha(n, q, u, chk) {
             var tr = document.createElement("tr");
             if(chk) tr.classList.add("linha-marcada");
-            // A TABELA NÃO TEM MAIS A COLUNA DE DELETAR AQUI
             tr.innerHTML = `
                 <td class="col-check"><input type="checkbox" onchange="alternarCheck(this)" ${chk ? 'checked' : ''}></td>
                 <td class="col-desc"><span contenteditable="true" class="nome-prod" onblur="salvarEOrdenar()">${n}</span></td>
