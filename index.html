@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Estoque Voz Busca V4.6</title>
+    <title>Estoque V4.7 (X Visível)</title>
     
     <link rel="icon" href="icone.png" type="image/png">
     <link rel="apple-touch-icon" href="icone.png">
@@ -54,10 +54,12 @@
             padding-bottom: 80px; transition: background-color 0.3s, color 0.3s; 
         }
 
+        /* --- CONFIGURAÇÃO DO FUNDO --- */
         body::before {
             content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-image: url('fundo-pizza.jpg'); background-size: cover; background-position: center;
-            opacity: 1; z-index: -1; pointer-events: none;
+            opacity: 0.7; /* <--- OPACIDADE 70% */
+            z-index: -1; pointer-events: none;
         }
         
         .header-container { display: flex; justify-content: center; align-items: center; position: relative; margin: 10px 0; }
@@ -118,8 +120,20 @@
             padding: 6px 12px; font-size: 10px; border-radius: 6px; margin-bottom: 8px; width: 100%; transition: all 0.3s; 
         }
         
-        .btn-limpar { position: absolute; right: 5px; bottom: 8px; color: var(--accent); font-size: 13px; padding: 4px; cursor: pointer; transition: transform 0.1s; }
-        .btn-limpar:active { transform: scale(0.8); color: var(--btn-danger); }
+        /* --- ESTILO DO "X" DE LIMPAR (MAIS VISÍVEL) --- */
+        .btn-limpar { 
+            position: absolute; 
+            right: 5px; 
+            bottom: 8px; 
+            color: var(--btn-danger); /* Vermelho para destacar */
+            font-size: 16px; /* Maior */
+            font-weight: 800; /* Mais grosso */
+            padding: 4px 8px; 
+            cursor: pointer; 
+            transition: transform 0.1s; 
+            opacity: 0.9;
+        }
+        .btn-limpar:active { transform: scale(0.8); opacity: 1; }
 
         /* MICROFONE ESTILO SIRI */
         .btn-mic {
