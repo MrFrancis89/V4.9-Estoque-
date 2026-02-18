@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Estoque Categorias</title>
+    <title>Estoque Categorias V4.1</title>
     
     <link rel="icon" href="icone.png" type="image/png">
     <link rel="apple-touch-icon" href="icone.png">
@@ -358,12 +358,12 @@
         
         // --- DADOS E FUNÇÕES DE CATEGORIAS ---
         const mapaCategorias = {
+            'temperos': ['orégano', 'pimenta', 'canela', 'colorau', 'caldo', 'tempero', 'ervas', 'salsa', 'cebolinha', 'cominho', 'açafrão', 'páprica', 'curry'],
+            'limpeza': ['detergente', 'sabão', 'esponja', 'água sanitária', 'desinfetante', 'papel', 'saco', 'lixo', 'bucha', 'álcool', 'limpador', 'multiuso', 'pano', 'vassoura'],
             'carnes': ['carne', 'frango', 'bacon', 'calabresa', 'presunto', 'peixe', 'hamburguer', 'linguiça', 'strogonoff', 'costela', 'bife'],
             'laticinios': ['queijo', 'mussarela', 'cheddar', 'requeijão', 'catupiry', 'leite', 'manteiga', 'iogurte', 'creme de leite', 'parmesão', 'provolone', 'gorgonzola'],
             'hortifruti': ['tomate', 'cebola', 'alho', 'batata', 'banana', 'limão', 'alface', 'rúcula', 'manjericão', 'pimentão', 'cenoura', 'azeitona', 'milho', 'ervilha', 'palmito', 'cogumelo', 'champignon', 'fruta', 'abacaxi', 'uva'],
             'mercearia': ['arroz', 'feijão', 'trigo', 'farinha', 'açúcar', 'sal', 'macarrão', 'óleo', 'azeite', 'fermento', 'fubá', 'molho', 'extrato', 'passata', 'ketchup', 'maionese', 'mostarda', 'chocolate', 'café', 'pão'],
-            'temperos': ['orégano', 'pimenta', 'canela', 'colorau', 'caldo', 'tempero', 'ervas', 'salsa', 'cebolinha', 'cominho', 'açafrão', 'páprica', 'curry'],
-            'limpeza': ['detergente', 'sabão', 'esponja', 'água sanitária', 'desinfetante', 'papel', 'saco', 'lixo', 'bucha', 'álcool', 'limpador', 'multiuso', 'pano', 'vassoura'],
             'bebidas': ['refrigerante', 'coca', 'guaraná', 'suco', 'água', 'cerveja', 'vinho', 'vodka', 'whisky', 'gelo', 'polpa'],
             'embalagens': ['caixa', 'sacola', 'plástico', 'filme', 'alumínio', 'isopor', 'guardanapo', 'canudo', 'copo']
         };
@@ -394,8 +394,14 @@
 
         function identificarCategoria(nomeItem) {
             let nome = nomeItem.toLowerCase();
-            for (let cat in mapaCategorias) {
-                if (mapaCategorias[cat].some(termo => nome.includes(termo))) {
+            
+            // FILA DE PRIORIDADE: Checa essas primeiro para "Caldo de Carne" não cair em "Carne"
+            // Se achar 'caldo' ou 'tempero', para aqui e retorna temperos.
+            const prioridade = ['temperos', 'limpeza', 'bebidas', 'laticinios', 'hortifruti', 'mercearia', 'carnes', 'embalagens'];
+
+            for (let i = 0; i < prioridade.length; i++) {
+                let cat = prioridade[i];
+                if (mapaCategorias[cat] && mapaCategorias[cat].some(termo => nome.includes(termo))) {
                     return cat;
                 }
             }
@@ -495,8 +501,11 @@
                     if (e.cancelable) e.preventDefault(); 
                     if (document.activeElement) document.activeElement.blur();
                     justSwiped = true;
+                    
+                    // --- CORREÇÃO DO POSICIONAMENTO DO BOTÃO VERMELHO ---
+                    // Usa offsetTop relativo ao container, ignorando o scroll da janela
                     swipeBtn.style.display = 'flex';
-                    swipeBtn.style.top = tr.getBoundingClientRect().top + window.scrollY + 'px'; // Fix pos
+                    swipeBtn.style.top = tr.offsetTop + 'px'; 
                     swipeBtn.style.height = tr.offsetHeight + 'px';
 
                     let moveX = swipeCurrentX + deltaX;
