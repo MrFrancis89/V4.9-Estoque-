@@ -13,133 +13,28 @@ const mapaCategorias = {
     'embalagens': ['caixa', 'sacola', 'plástico', 'filme', 'alumínio', 'isopor', 'guardanapo', 'canudo', 'copo']
 };
 
-const coresCategorias = {
-    'carnes': 'var(--cat-carnes)', 'laticinios': 'var(--cat-laticinios)',
-    'hortifruti': 'var(--cat-horti)', 'mercearia': 'var(--cat-mercearia)',
-    'temperos': 'var(--cat-temperos)', 'limpeza': 'var(--cat-limpeza)',
-    'bebidas': 'var(--cat-bebidas)', 'embalagens': 'var(--cat-outros)',
-    'outros': 'var(--cat-outros)'
-};
+const coresCategorias = { 'carnes': 'var(--cat-carnes)', 'laticinios': 'var(--cat-laticinios)', 'hortifruti': 'var(--cat-horti)', 'mercearia': 'var(--cat-mercearia)', 'temperos': 'var(--cat-temperos)', 'limpeza': 'var(--cat-limpeza)', 'bebidas': 'var(--cat-bebidas)', 'embalagens': 'var(--cat-outros)', 'outros': 'var(--cat-outros)' };
+const nomesCategorias = { 'carnes': '🥩 CARNES & FRIOS', 'laticinios': '🧀 LATICÍNIOS', 'hortifruti': '🥦 HORTIFRUTI', 'mercearia': '🍝 MERCEARIA & GRÃOS', 'temperos': '🧂 TEMPEROS', 'limpeza': '🧽 LIMPEZA & DESCARTÁVEIS', 'bebidas': '🥤 BEBIDAS', 'embalagens': '📦 EMBALAGENS', 'outros': '📦 OUTROS' };
 
-const nomesCategorias = {
-    'carnes': '🥩 CARNES & FRIOS', 'laticinios': '🧀 LATICÍNIOS',
-    'hortifruti': '🥦 HORTIFRUTI', 'mercearia': '🍝 MERCEARIA & GRÃOS',
-    'temperos': '🧂 TEMPEROS', 'limpeza': '🧽 LIMPEZA & DESCARTÁVEIS',
-    'bebidas': '🥤 BEBIDAS', 'embalagens': '📦 EMBALAGENS',
-    'outros': '📦 OUTROS'
-};
+function identificarCategoria(nomeItem) { let nome = nomeItem.toLowerCase(); const prioridade = ['temperos', 'limpeza', 'bebidas', 'laticinios', 'hortifruti', 'mercearia', 'carnes', 'embalagens']; for (let i = 0; i < prioridade.length; i++) { let cat = prioridade[i]; if (mapaCategorias[cat] && mapaCategorias[cat].some(termo => nome.includes(termo))) { return cat; } } return 'outros'; }
+function darFeedback() { if (navigator.vibrate) { navigator.vibrate(15); } try { if (!audioCtx) { const AudioContext = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContext(); } if (audioCtx.state === 'suspended') { audioCtx.resume(); } const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.02); gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.02); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.03); } catch (e) {} }
 
-function identificarCategoria(nomeItem) {
-    let nome = nomeItem.toLowerCase();
-    const prioridade = ['temperos', 'limpeza', 'bebidas', 'laticinios', 'hortifruti', 'mercearia', 'carnes', 'embalagens'];
-    for (let i = 0; i < prioridade.length; i++) {
-        let cat = prioridade[i];
-        if (mapaCategorias[cat] && mapaCategorias[cat].some(termo => nome.includes(termo))) { return cat; }
-    }
-    return 'outros';
-}
-
-function darFeedback() {
-    if (navigator.vibrate) { navigator.vibrate(15); } 
-    try {
-        if (!audioCtx) { const AudioContext = window.AudioContext || window.webkitAudioContext; audioCtx = new AudioContext(); }
-        if (audioCtx.state === 'suspended') { audioCtx.resume(); }
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.02);
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.02);
-        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(audioCtx.currentTime); osc.stop(audioCtx.currentTime + 0.03);
-    } catch (e) {}
-}
-
-let recognition = null;
-let isRecording = false;
-let activeField = null;
-
-function initSpeech() {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.lang = 'pt-BR';
-        recognition.continuous = false; 
-        recognition.interimResults = true; 
-        recognition.onstart = function() {
-            isRecording = true;
-            if (activeField === 'produto') { document.getElementById('btn-mic-prod').classList.add('ouvindo'); document.getElementById('novoProduto').placeholder = "Ouvindo..."; } 
-            else if (activeField === 'busca') { document.getElementById('btn-mic-busca').classList.add('ouvindo'); document.getElementById('filtroBusca').placeholder = "Ouvindo..."; }
-        };
-        recognition.onend = function() {
-            isRecording = false;
-            document.getElementById('btn-mic-prod').classList.remove('ouvindo');
-            document.getElementById('btn-mic-busca').classList.remove('ouvindo');
-            document.getElementById('novoProduto').placeholder = "Item";
-            document.getElementById('filtroBusca').placeholder = "🔍 Buscar...";
-            if(activeField === 'produto') autoPreencherUnidade(); 
-            activeField = null;
-        };
-        recognition.onresult = function(event) {
-            let transcript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) { transcript += event.results[i][0].transcript; }
-            let textoFinal = transcript.replace(/\.$/, '');
-            if (activeField === 'produto') { document.getElementById('novoProduto').value = textoFinal; } 
-            else if (activeField === 'busca') { document.getElementById('filtroBusca').value = textoFinal; filtrarGeral(); }
-        };
-    }
-}
-
+let recognition = null; let isRecording = false; let activeField = null;
+function initSpeech() { const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; if (SpeechRecognition) { recognition = new SpeechRecognition(); recognition.lang = 'pt-BR'; recognition.continuous = false; recognition.interimResults = true; recognition.onstart = function() { isRecording = true; if (activeField === 'produto') { document.getElementById('btn-mic-prod').classList.add('ouvindo'); document.getElementById('novoProduto').placeholder = "Ouvindo..."; } else if (activeField === 'busca') { document.getElementById('btn-mic-busca').classList.add('ouvindo'); document.getElementById('filtroBusca').placeholder = "Ouvindo..."; } }; recognition.onend = function() { isRecording = false; document.getElementById('btn-mic-prod').classList.remove('ouvindo'); document.getElementById('btn-mic-busca').classList.remove('ouvindo'); document.getElementById('novoProduto').placeholder = "Item"; document.getElementById('filtroBusca').placeholder = "🔍 Buscar..."; if(activeField === 'produto') autoPreencherUnidade(); activeField = null; }; recognition.onresult = function(event) { let transcript = ''; for (let i = event.resultIndex; i < event.results.length; i++) { transcript += event.results[i][0].transcript; } let textoFinal = transcript.replace(/\.$/, ''); if (activeField === 'produto') { document.getElementById('novoProduto').value = textoFinal; } else if (activeField === 'busca') { document.getElementById('filtroBusca').value = textoFinal; filtrarGeral(); } }; } }
 function toggleMic(campo, event) { if(event) event.stopPropagation(); darFeedback(); if (!recognition) { mostrarToast("Navegador sem suporte."); return; } if (isRecording) { recognition.stop(); } else { activeField = campo; try { recognition.start(); } catch (e) { recognition.stop(); } } }
-
 window.addEventListener('load', initSpeech);
 
-function toggleSearch(event) {
-    if (event) event.stopPropagation(); darFeedback();
-    const overlay = document.getElementById('search-overlay'); const btn = document.getElementById('assistive-touch');
-    if (overlay.style.display === 'block') { overlay.style.display = 'none'; btn.style.opacity = '0.8'; } 
-    else { overlay.style.display = 'block'; overlay.style.top = (window.scrollY + 15) + 'px'; btn.style.opacity = '0'; document.getElementById('filtroBusca').focus(); }
-}
+function toggleSearch(event) { if (event) event.stopPropagation(); darFeedback(); const overlay = document.getElementById('search-overlay'); const btn = document.getElementById('assistive-touch'); if (overlay.style.display === 'block') { overlay.style.display = 'none'; btn.style.opacity = '0.85'; } else { overlay.style.display = 'block'; overlay.style.top = (window.scrollY + 15) + 'px'; btn.style.opacity = '0'; document.getElementById('filtroBusca').focus(); } }
 document.addEventListener('click', function(event) { const overlay = document.getElementById('search-overlay'); const btn = document.getElementById('assistive-touch'); if ((!overlay.contains(event.target) && !btn.contains(event.target)) && overlay.style.display === 'block') { toggleSearch(null); } });
 window.addEventListener('scroll', function() { var overlay = document.getElementById('search-overlay'); if (overlay.style.display === 'block') { overlay.style.top = (window.scrollY + 15) + 'px'; } });
 
-let swipeStartX = 0, swipeStartY = 0, swipeCurrentX = 0;
-let isSwiping = false, swipedRow = null, justSwiped = false;
+// LÓGICA LONG PRESS DA V4.8
+let pressTimer; const btnLupa = document.getElementById('assistive-touch');
+btnLupa.addEventListener('touchstart', (e) => { e.preventDefault(); pressTimer = setTimeout(() => { pressTimer = null; darFeedback(); const overlay = document.getElementById('search-overlay'); if (overlay.style.display !== 'block') toggleSearch(null); if (!isRecording) toggleMic('busca', null); }, 600); }, {passive: false});
+btnLupa.addEventListener('touchend', (e) => { e.preventDefault(); if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; toggleSearch(null); } });
 
-function initSwipe() {
-    const container = document.getElementById("lista-itens-container"); const swipeBtn = document.getElementById("swipe-bg");
-    function getClientX(e) { return e.touches ? e.touches[0].clientX : e.clientX; }
-    function getClientY(e) { return e.touches ? e.touches[0].clientY : e.clientY; }
-
-    container.addEventListener('touchstart', function(e) {
-        let tr = e.target.closest('tr'); if (!tr || tr.classList.contains('categoria-header-row')) return;
-        if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') return;
-        if (swipedRow && swipedRow !== tr) closeSwipe(swipedRow);
-        swipeStartX = getClientX(e); swipeStartY = getClientY(e); isSwiping = false; justSwiped = false;
-        swipeCurrentX = (swipedRow === tr) ? -80 : 0; tr.style.transition = 'none';
-    }, {passive: true});
-
-    container.addEventListener('touchmove', function(e) {
-        let tr = e.target.closest('tr'); if (!tr || tr.classList.contains('categoria-header-row')) return;
-        let deltaX = getClientX(e) - swipeStartX; let deltaY = getClientY(e) - swipeStartY;
-        if (!isSwiping && Math.abs(deltaX) > 15 && Math.abs(deltaX) > Math.abs(deltaY)) { isSwiping = true; }
-        if (isSwiping) {
-            if (e.cancelable) e.preventDefault(); if (document.activeElement) document.activeElement.blur(); justSwiped = true;
-            swipeBtn.style.display = 'flex'; swipeBtn.style.top = tr.offsetTop + 'px'; swipeBtn.style.height = tr.offsetHeight + 'px';
-            let moveX = swipeCurrentX + deltaX; if (moveX > 0) moveX = 0; if (moveX < -100) moveX = -100; tr.style.transform = `translateX(${moveX}px)`;
-        }
-    }, {passive: false});
-
-    container.addEventListener('touchend', function(e) {
-        let tr = e.target.closest('tr'); if (!tr || tr.classList.contains('categoria-header-row')) return;
-        if (isSwiping) {
-            let deltaX = (e.changedTouches ? e.changedTouches[0].clientX : e.clientX) - swipeStartX; let finalX = swipeCurrentX + deltaX;
-            tr.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
-            if (finalX < -40) {
-                tr.style.transform = `translateX(-80px)`; swipedRow = tr;
-                swipeBtn.onclick = function() { mostrarConfirmacao("Deseja realmente remover este item?", () => { tr.remove(); salvarDados(); atualizarDropdown(); mostrarToast("Removido 🗑️"); swipeBtn.style.display = 'none'; swipedRow = null; }); };
-            } else { closeSwipe(tr); }
-            setTimeout(() => { justSwiped = false; }, 300);
-        } else { justSwiped = false; }
-    });
-    document.addEventListener('touchstart', function(e) { if (swipedRow && !swipedRow.contains(e.target) && e.target.id !== 'swipe-bg') { closeSwipe(swipedRow); } }, {passive: true});
-}
+let swipeStartX = 0, swipeStartY = 0, swipeCurrentX = 0; let isSwiping = false, swipedRow = null, justSwiped = false;
+function initSwipe() { const container = document.getElementById("lista-itens-container"); const swipeBtn = document.getElementById("swipe-bg"); function getClientX(e) { return e.touches ? e.touches[0].clientX : e.clientX; } function getClientY(e) { return e.touches ? e.touches[0].clientY : e.clientY; } container.addEventListener('touchstart', function(e) { let tr = e.target.closest('tr'); if (!tr || tr.classList.contains('categoria-header-row')) return; if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') return; if (swipedRow && swipedRow !== tr) closeSwipe(swipedRow); swipeStartX = getClientX(e); swipeStartY = getClientY(e); isSwiping = false; justSwiped = false; swipeCurrentX = (swipedRow === tr) ? -80 : 0; tr.style.transition = 'none'; }, {passive: true}); container.addEventListener('touchmove', function(e) { let tr = e.target.closest('tr'); if (!tr || tr.classList.contains('categoria-header-row')) return; let deltaX = getClientX(e) - swipeStartX; let deltaY = getClientY(e) - swipeStartY; if (!isSwiping && Math.abs(deltaX) > 15 && Math.abs(deltaX) > Math.abs(deltaY)) { isSwiping = true; } if (isSwiping) { if (e.cancelable) e.preventDefault(); if (document.activeElement) document.activeElement.blur(); justSwiped = true; swipeBtn.style.display = 'flex'; swipeBtn.style.top = tr.offsetTop + 'px'; swipeBtn.style.height = tr.offsetHeight + 'px'; let moveX = swipeCurrentX + deltaX; if (moveX > 0) moveX = 0; if (moveX < -100) moveX = -100; tr.style.transform = `translateX(${moveX}px)`; } }, {passive: false}); container.addEventListener('touchend', function(e) { let tr = e.target.closest('tr'); if (!tr || tr.classList.contains('categoria-header-row')) return; if (isSwiping) { let deltaX = (e.changedTouches ? e.changedTouches[0].clientX : e.clientX) - swipeStartX; let finalX = swipeCurrentX + deltaX; tr.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'; if (finalX < -40) { tr.style.transform = `translateX(-80px)`; swipedRow = tr; swipeBtn.onclick = function() { mostrarConfirmacao("Deseja realmente remover este item?", () => { tr.remove(); salvarDados(); atualizarDropdown(); mostrarToast("Removido 🗑️"); swipeBtn.style.display = 'none'; swipedRow = null; }); }; } else { closeSwipe(tr); } setTimeout(() => { justSwiped = false; }, 300); } else { justSwiped = false; } }); document.addEventListener('touchstart', function(e) { if (swipedRow && !swipedRow.contains(e.target) && e.target.id !== 'swipe-bg') { closeSwipe(swipedRow); } }, {passive: true}); }
 function closeSwipe(tr) { if (tr) { tr.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)'; tr.style.transform = `translateX(0px)`; } setTimeout(() => { if (!swipedRow || swipedRow === tr) { document.getElementById("swipe-bg").style.display = 'none'; if (swipedRow === tr) swipedRow = null; } }, 300); }
 
 function abrirCalculadora(inputElement) { if (justSwiped || swipedRow) return; darFeedback(); inputElement.blur(); inputCalculadoraAtual = inputElement; let tituloCalc = "🧮 Calculadora"; if (inputElement.id === "novoQtd") { let nomeNovo = document.getElementById("novoProduto").value.trim(); tituloCalc = nomeNovo ? "🧮 " + nomeNovo : "🧮 NOVO ITEM"; } else { let linha = inputElement.closest("tr"); if (linha) { let nomeTabela = linha.querySelector(".nome-prod").innerText.trim(); tituloCalc = "🧮 " + nomeTabela; } } document.getElementById("calc-title").innerText = tituloCalc; let val = inputElement.value.replace(',', '.').trim(); expressaoCalc = val || ""; atualizarDisplayCalc(); document.getElementById('modal-calc').style.display = 'flex'; }
@@ -164,10 +59,9 @@ function obterDataAmanha() { let hoje = new Date(); let amanha = new Date(hoje);
 function atualizarTitulos() { document.getElementById("titulo-pagina").innerText = "ESTOQUE " + obterDataAtual(); document.getElementById("titulo-compras").innerText = "LISTA " + obterDataAmanha(); }
 
 var storageKey = "estoqueDados_v4_categorias"; var storageOcultos = "itensOcultosPadrao_v4"; var storageMeus = "meusItensPadrao_v4";
-
 var containerItens = document.getElementById("lista-itens-container"); var selectFiltro = document.getElementById("filtroSelect"); var buscaInput = document.getElementById("filtroBusca"); var areaCompras = document.getElementById("area-compras"); var ulCompras = document.getElementById("lista-compras-visual");
 
-function carregarListaPadrao() { var listaCombinada = []; var ocultosSistema = JSON.parse(localStorage.getItem(storageOcultos) || "[]"); produtosPadrao.forEach(p => { var d = p.split("|"); if (!ocultosSistema.includes(d[0].toLowerCase())) { listaCombinada.push({ n: d[0], q: "", u: d[1], c: false }); } }); var favoritosUsuario = JSON.parse(localStorage.getItem(storageMeus) || "[]"); favoritosUsuario.forEach(item => { if(!listaCombinada.some(i => i.n.toLowerCase() === item.n.toLowerCase())) { listaCombinada.push({ n: item.n, q: "", u: item.u, c: false }); } }); renderizarListaCompleta(listaCombinada); }
+function carregarListaPadrao() { var listaCombinada = []; var ocultosSistema = JSON.parse(localStorage.getItem(storageOcultos) || "[]"); if(typeof produtosPadrao !== 'undefined') { produtosPadrao.forEach(p => { var d = p.split("|"); if (!ocultosSistema.includes(d[0].toLowerCase())) { listaCombinada.push({ n: d[0], q: "", u: d[1], c: false }); } }); } var favoritosUsuario = JSON.parse(localStorage.getItem(storageMeus) || "[]"); favoritosUsuario.forEach(item => { if(!listaCombinada.some(i => i.n.toLowerCase() === item.n.toLowerCase())) { listaCombinada.push({ n: item.n, q: "", u: item.u, c: false }); } }); renderizarListaCompleta(listaCombinada); }
 function iniciarApp() { if(localStorage.getItem('temaEstoque') === 'claro') { document.body.classList.add('light-mode'); } atualizarTitulos(); var salvos = localStorage.getItem(storageKey); if (salvos && JSON.parse(salvos).length > 0) { renderizarListaCompleta(JSON.parse(salvos)); } else { carregarListaPadrao(); } atualizarDropdown(); atualizarPainelCompras(); initSwipe(); }
 
 function renderizarListaCompleta(dados) { containerItens.innerHTML = ""; dados.sort((a, b) => a.n.localeCompare(b.n)); let grupos = { 'carnes': [], 'laticinios': [], 'hortifruti': [], 'mercearia': [], 'temperos': [], 'limpeza': [], 'bebidas': [], 'embalagens': [], 'outros': [] }; dados.forEach(item => { let cat = identificarCategoria(item.n); grupos[cat].push(item); }); for (let cat in grupos) { if (grupos[cat].length > 0) { let trHeader = document.createElement("tr"); trHeader.classList.add("categoria-header-row"); trHeader.innerHTML = `<td colspan="4" class="categoria-header" style="background-color: ${coresCategorias[cat]}">${nomesCategorias[cat]}</td>`; containerItens.appendChild(trHeader); grupos[cat].forEach(item => { inserirLinhaNoDOM(item.n, item.q, item.u, item.c); }); } } }
@@ -179,35 +73,8 @@ function alternarTodos(masterBox) { darFeedback(); let isChecked = masterBox.che
 function alternarCheck(box) { darFeedback(); var linha = box.parentElement.parentElement; if(box.checked) { linha.classList.add("linha-marcada"); } else { linha.classList.remove("linha-marcada"); document.getElementById('check-todos').checked = false; } salvarDados(); }
 function atualizarPainelCompras() { ulCompras.innerHTML = ""; var temItens = false; document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => { var checkbox = r.querySelector("input[type='checkbox']"); if (checkbox && checkbox.checked) { temItens = true; var li = document.createElement("li"); li.innerText = r.querySelector(".nome-prod").innerText.replace(/(\r\n|\n|\r)/gm, " ").trim(); ulCompras.appendChild(li); } }); areaCompras.style.display = temItens ? "block" : "none"; }
 
-function gerarTextoEstoque() {
-    let t = "*ESTOQUE " + obterDataAtual() + "*\n\n";
-    let itens = [];
-    document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => {
-        let cols = r.querySelectorAll("td");
-        let nome = cols[1].innerText.replace(/(\r\n|\n|\r)/gm, " ").trim();
-        let qTxt = cols[2].querySelector("input").value.trim();
-        let unidade = cols[3].querySelector("select").options[cols[3].querySelector("select").selectedIndex].text;
-        if(qTxt !== "") { itens.push(`${nome}: ${qTxt} ${unidade}`); } 
-        else { itens.push(`${nome}:   ${unidade}`); }
-    });
-    itens.sort();
-    itens.forEach(i => t += `${i}\n`);
-    return t;
-}
-
-function gerarTextoCompras() {
-    let t = "*LISTA DE COMPRAS " + obterDataAmanha() + "*\n\n";
-    let itens = [];
-    document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => {
-        var check = r.querySelector("input[type='checkbox']");
-        if (check && check.checked) {
-            itens.push(r.querySelector(".nome-prod").innerText.replace(/(\r\n|\n|\r)/gm, " ").trim());
-        }
-    });
-    itens.sort();
-    itens.forEach(i => t += `${i}\n`);
-    return t;
-}
+function gerarTextoEstoque() { let t = "*ESTOQUE " + obterDataAtual() + "*\n\n"; let itens = []; document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => { let cols = r.querySelectorAll("td"); let nome = cols[1].innerText.replace(/(\r\n|\n|\r)/gm, " ").trim(); let qTxt = cols[2].querySelector("input").value.trim(); let unidade = cols[3].querySelector("select").options[cols[3].querySelector("select").selectedIndex].text; if(qTxt !== "") { itens.push(`${nome}: ${qTxt} ${unidade}`); } else { itens.push(`${nome}:   ${unidade}`); } }); itens.sort(); itens.forEach(i => t += `${i}\n`); return t; }
+function gerarTextoCompras() { let t = "*LISTA DE COMPRAS " + obterDataAmanha() + "*\n\n"; let itens = []; document.querySelectorAll("#lista-itens-container tr:not(.categoria-header-row)").forEach(r => { var check = r.querySelector("input[type='checkbox']"); if (check && check.checked) { itens.push(r.querySelector(".nome-prod").innerText.replace(/(\r\n|\n|\r)/gm, " ").trim()); } }); itens.sort(); itens.forEach(i => t += `${i}\n`); return t; }
 
 function copiarCompras() { copiarParaClipboard(gerarTextoCompras()); } function compartilharComprasZap() { window.open("https://wa.me/?text=" + encodeURIComponent(gerarTextoCompras()), '_blank'); }
 function copiarEstoque() { copiarParaClipboard(gerarTextoEstoque()); } function compartilharEstoque() { window.open("https://wa.me/?text=" + encodeURIComponent(gerarTextoEstoque()), '_blank'); }
@@ -225,6 +92,6 @@ function resetarTudo() { mostrarConfirmacao("ATENÇÃO: Restaurar lista de fábr
 function iniciarNovoDia() { mostrarConfirmacao("ZERAR QUANTIDADES?", () => { var dados = JSON.parse(localStorage.getItem(storageKey) || "[]"); dados.forEach(item => { item.q = ""; item.c = false; }); localStorage.setItem(storageKey, JSON.stringify(dados)); location.reload(); }, 'sucesso'); }
 function salvarListaNoCelular() { var dados = localStorage.getItem(storageKey); if (!dados || dados === "[]") return; darFeedback(); var blob = new Blob([dados], { type: "application/json" }); var url = URL.createObjectURL(blob); var a = document.createElement("a"); a.href = url; a.download = "ESTOQUE_CATEGORIAS.json"; a.click(); }
 function carregarListaDoCelular(event) { var f = event.target.files[0]; var r = new FileReader(); r.onload = function(e) { localStorage.setItem(storageKey, e.target.result); location.reload(); }; r.readAsText(f); }
-function autoPreencherUnidade() { var inputNome = document.getElementById("novoProduto").value.toLowerCase().trim(); var match = produtosPadrao.find(p => p.split("|")[0].toLowerCase().startsWith(inputNome)); if (match) { document.getElementById("novoUnidade").value = match.split("|")[1]; } }
+function autoPreencherUnidade() { var inputNome = document.getElementById("novoProduto").value.toLowerCase().trim(); if(typeof produtosPadrao !== 'undefined') { var match = produtosPadrao.find(p => p.split("|")[0].toLowerCase().startsWith(inputNome)); if (match) { document.getElementById("novoUnidade").value = match.split("|")[1]; } } }
 
 iniciarApp();
